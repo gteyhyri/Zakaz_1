@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elite Clicker | Telegram Mini App</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-blue: #2A7FFF;
+            --dark-blue: #1A5BB2;
+            --light-blue: #E6F0FF;
+            --white: #FFFFFF;
+            --gray: #F5F7FA;
+            --dark-gray: #6C7883;
+            --shadow: 0 8px 24px rgba(42, 127, 255, 0.2);
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        body {
+            background-image: url('/static/phon.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: var(--dark-gray);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            display: flex;
+            justify-content: flex-end;
+            padding: 16px;
+        }
+
+        .info-btn {
+            background-color: var(--primary-blue);
+            color: var(--white);
+            border: none;
+            border-radius: 50px;
+            padding: 10px 20px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-btn:hover {
+            background-color: var(--dark-blue);
+            transform: translateY(-2px);
+        }
+
+        .info-btn:active {
+            transform: translateY(0);
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            text-align: center;
+            background-color: rgba(255, 255, 255, 0.85);
+            margin: 20px;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+        }
+
+        .title {
+            color: var(--dark-blue);
+            margin-bottom: 8px;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            color: var(--dark-gray);
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+
+        .clicker-container {
+            position: relative;
+            margin: 32px 0;
+        }
+
+        .clicker-image {
+            width: 240px;
+            height: 240px;
+            border-radius: 24px;
+            object-fit: cover;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: var(--transition);
+            border: 4px solid var(--white);
+        }
+
+        .clicker-image:active {
+            transform: scale(0.95);
+        }
+
+        .click-effect {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: clickAnimation 0.6s ease-out;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+        }
+
+        @keyframes clickAnimation {
+            0% {
+                transform: translate(-50%, -50%) scale(0.2);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        .stats-container {
+            background-color: var(--white);
+            border-radius: 16px;
+            padding: 20px;
+            width: 100%;
+            max-width: 320px;
+            box-shadow: var(--shadow);
+            margin-top: 24px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .stat-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .stat-label {
+            color: var(--dark-gray);
+            font-weight: 500;
+        }
+
+        .stat-value {
+            color: var(--dark-blue);
+            font-weight: 700;
+        }
+
+        .click-counter {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary-blue);
+            margin-bottom: 8px;
+        }
+
+        .regen-bar {
+            height: 8px;
+            background-color: var(--light-blue);
+            border-radius: 4px;
+            margin-top: 12px;
+            overflow: hidden;
+        }
+
+        .regen-progress {
+            height: 100%;
+            background-color: var(--primary-blue);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .upgrade-btn {
+            background-color: var(--primary-blue);
+            color: var(--white);
+            border: none;
+            border-radius: 12px;
+            padding: 14px 24px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            margin-top: 24px;
+            width: 100%;
+            max-width: 320px;
+        }
+
+        .upgrade-btn:hover {
+            background-color: var(--dark-blue);
+            transform: translateY(-2px);
+        }
+
+        .upgrade-btn:active {
+            transform: translateY(0);
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--primary-blue);
+            color: var(--white);
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-weight: 600;
+            box-shadow: var(--shadow);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            opacity: 1;
+        }
+
+        @media (max-width: 480px) {
+            .clicker-image {
+                width: 200px;
+                height: 200px;
+            }
+            
+            .title {
+                font-size: 20px;
+            }
+            
+            .main-content {
+                margin: 10px;
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <button class="info-btn" id="infoBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M12 16V12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M12 8H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Info
+        </button>
+    </div>
+    
+    <div class="main-content">
+        <h1 class="title">Elite Clicker</h1>
+        <p class="subtitle">Нажимайте на изображение для получения кликов</p>
+        
+        <div class="clicker-container" id="clickerContainer">
+            <img src="/static/IMG_8264.PNG" alt="Click me" class="clicker-image" id="clickerImage">
+        </div>
+        
+        <div class="stats-container">
+            <div class="click-counter">Кликов: <span id="totalClicks">0</span></div>
+            <div class="stat-item">
+                <span class="stat-label">Доступно кликов:</span>
+                <span class="stat-value" id="availableClicks">100</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Сила клика:</span>
+                <span class="stat-value" id="clickPower">1</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Восстановление:</span>
+                <span class="stat-value" id="regenRate">1 клик/сек</span>
+            </div>
+            <div class="regen-bar">
+                <div class="regen-progress" id="regenProgress" style="width: 100%"></div>
+            </div>
+        </div>
+        
+        <button class="upgrade-btn" id="upgradeBtn">Улучшения</button>
+    </div>
+    
+    <div class="notification" id="notification">+1 клик!</div>
+    
+    <script>
+        // Инициализация Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        
+        // Получаем ID пользователя из Telegram
+        const userId = tg.initDataUnsafe.user?.id;
+        if (!userId) {
+            console.error("User ID not found in Telegram WebApp init data");
+        }
+        
+        // Элементы DOM
+        const elements = {
+            clickerImage: document.getElementById('clickerImage'),
+            clickerContainer: document.getElementById('clickerContainer'),
+            totalClicks: document.getElementById('totalClicks'),
+            availableClicks: document.getElementById('availableClicks'),
+            clickPower: document.getElementById('clickPower'),
+            regenRate: document.getElementById('regenRate'),
+            regenProgress: document.getElementById('regenProgress'),
+            upgradeBtn: document.getElementById('upgradeBtn'),
+            infoBtn: document.getElementById('infoBtn'),
+            notification: document.getElementById('notification')
+        };
+        
+        // Состояние приложения
+        let appState = {
+            totalClicks: 0,
+            availableClicks: 100,
+            clickPower: 1,
+            maxClicks: 100,
+            regenRate: 1,
+            lastUpdate: Date.now()
+        };
+        
+        // Загрузка данных пользователя
+        async function loadUserData() {
+            try {
+                const response = await fetch('/api/user', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ userId })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                
+                const data = await response.json();
+                
+                // Обновляем состояние приложения
+                appState = {
+                    totalClicks: data.totalClicks || 0,
+                    availableClicks: data.availableClicks || 100,
+                    clickPower: data.clickPower || 1,
+                    maxClicks: data.maxClicks || 100,
+                    regenRate: data.regenRate || 1,
+                    lastUpdate: Date.now()
+                };
+                
+                updateUI();
+                
+            } catch (error) {
+                console.error('Error loading user data:', error);
+            }
+        }
+        
+        // Обновление интерфейса
+        function updateUI() {
+            elements.totalClicks.textContent = appState.totalClicks;
+            elements.availableClicks.textContent = Math.floor(appState.availableClicks);
+            elements.clickPower.textContent = appState.clickPower;
+            elements.regenRate.textContent = `${appState.regenRate.toFixed(1)} клик/сек`;
+            
+            // Обновление прогресс-бара
+            const progressPercent = (appState.availableClicks / appState.maxClicks) * 100;
+            elements.regenProgress.style.width = `${progressPercent}%`;
+        }
+        
+        // Показ уведомления
+        function showNotification(text) {
+            elements.notification.textContent = text;
+            elements.notification.classList.add('show');
+            
+            setTimeout(() => {
+                elements.notification.classList.remove('show');
+            }, 1000);
+        }
+        
+        // Создание эффекта клика
+        function createClickEffect(x, y) {
+            const effect = document.createElement('div');
+            effect.className = 'click-effect';
+            effect.style.left = `${x}px`;
+            effect.style.top = `${y}px`;
+            
+            elements.clickerContainer.appendChild(effect);
+            
+            setTimeout(() => {
+                effect.remove();
+            }, 600);
+        }
+        
+        // Обработка клика по изображению
+        async function handleClick(e) {
+            if (appState.availableClicks < 1) {
+                showNotification('Нет доступных кликов!');
+                return;
+            }
+            
+            // Координаты клика для эффекта
+            const rect = elements.clickerImage.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            createClickEffect(x, y);
+            
+            try {
+                const response = await fetch('/api/user/click', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ userId })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Click failed');
+                }
+                
+                const data = await response.json();
+                
+                // Обновляем состояние
+                appState.totalClicks = data.totalClicks;
+                appState.availableClicks = data.availableClicks;
+                
+                updateUI();
+                showNotification(`+${appState.clickPower} клик!`);
+                
+            } catch (error) {
+                console.error('Error handling click:', error);
+                showNotification('Ошибка! Попробуйте снова');
+            }
+        }
+        
+        // Обработка улучшений
+        async function handleUpgrade() {
+            try {
+                const result = await tg.showPopup({
+                    title: 'Улучшения',
+                    message: 'Выберите улучшение:',
+                    buttons: [
+                        { id: 'power', type: 'default', text: `Сила клика (+1) (Текущая: ${appState.clickPower})` },
+                        { id: 'regen', type: 'default', text: `Скорость восстановления (+0.1/сек) (Текущая: ${appState.regenRate})` },
+                        { id: 'max', type: 'default', text: `Макс. кликов (+10) (Текущий: ${appState.maxClicks})` },
+                        { type: 'cancel', text: 'Отмена' }
+                    ]
+                });
+                
+                if (!result || result === 'cancel') return;
+                
+                const response = await fetch('/api/user/upgrade', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        userId,
+                        upgradeType: result 
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Upgrade failed');
+                }
+                
+                const data = await response.json();
+                
+                // Обновляем состояние
+                appState.clickPower = data.clickPower;
+                appState.regenRate = data.regenRate;
+                appState.maxClicks = data.maxClicks;
+                appState.availableClicks = data.availableClicks;
+                
+                updateUI();
+                showNotification('Улучшение применено!');
+                
+            } catch (error) {
+                console.error('Error handling upgrade:', error);
+                showNotification('Ошибка улучшения!');
+            }
+        }
+        
+        // Периодическое обновление кликов
+        async function updateClicksPeriodically() {
+            try {
+                const response = await fetch('/api/user', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ userId })
+                });
+                
+                if (!response.ok) return;
+                
+                const data = await response.json();
+                
+                if (Math.floor(appState.availableClicks) !== Math.floor(data.availableClicks)) {
+                    appState.availableClicks = data.availableClicks;
+                    updateUI();
+                }
+                
+            } catch (error) {
+                console.error('Error updating clicks:', error);
+            }
+        }
+        
+        // Инициализация приложения
+        async function initApp() {
+            // Загружаем данные сразу при старте
+            await loadUserData();
+            
+            // Обновляем клики каждую секунду
+            setInterval(updateClicksPeriodically, 1000);
+        }
+        
+        // События
+        elements.clickerImage.addEventListener('click', handleClick);
+        elements.upgradeBtn.addEventListener('click', handleUpgrade);
+        elements.infoBtn.addEventListener('click', () => {
+            tg.openTelegramLink('https://t.me/your_channel');
+        });
+        
+        // Запуск приложения
+        initApp();
+    </script>
+</body>
+</html>
