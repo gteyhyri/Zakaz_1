@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elite Clicker | Telegram Mini App</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-blue: #2A7FFF;
+            --dark-blue: #1A5BB2;
+            --light-blue: #E6F0FF;
+            --white: #FFFFFF;
+            --gray: #F5F7FA;
+            --dark-gray: #6C7883;
+            --shadow: 0 8px 24px rgba(42, 127, 255, 0.2);
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        body {
+            background-image: url('/static/phon.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: #2C3E50;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            display: flex;
+            justify-content: flex-end;
+            padding: 16px;
+        }
+
+        .info-btn {
+            background-color: var(--primary-blue);
+            color: var(--white);
+            border: none;
+            border-radius: 50px;
+            padding: 10px 20px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-btn:hover {
+            background-color: var(--dark-blue);
+            transform: translateY(-2px);
+        }
+
+        .info-btn:active {
+            transform: translateY(0);
+        }
+
+        .sound-control {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background-color: var(--primary-blue);
+            color: var(--white);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            z-index: 100;
+            transition: var(--transition);
+        }
+
+        .sound-control:hover {
+            background-color: var(--dark-blue);
+            transform: scale(1.1);
+        }
+
+        .sound-control.muted {
+            background-color: var(--dark-gray);
+        }
+
+        .sound-control.muted i {
+            color: var(--white);
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            text-align: center;
+            margin: 20px;
+            border-radius: 16px;
+        }
+
+        .title {
+            color: var(--dark-blue);
+            margin-bottom: 8px;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            color: var(--dark-gray);
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+
+        .clicker-container {
+            position: relative;
+            margin: 32px 0;
+        }
+
+        .clicker-image {
+            width: 240px;
+            height: 240px;
+            border-radius: 24px;
+            object-fit: cover;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: var(--transition);
+            border: 4px solid var(--white);
+        }
+
+        .clicker-image:active {
+            transform: scale(0.95);
+        }
+
+        .click-effect {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: clickAnimation 0.6s ease-out;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+        }
+
+        @keyframes clickAnimation {
+            0% {
+                transform: translate(-50%, -50%) scale(0.2);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        .stats-container {
+            background-color: var(--white);
+            border-radius: 16px;
+            padding: 20px;
+            width: 100%;
+            max-width: 320px;
+            box-shadow: var(--shadow);
+            margin-top: 24px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .stat-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .stat-label {
+            color: var(--dark-gray);
+            font-weight: 500;
+        }
+
+        .stat-value {
+            color: var(--dark-blue);
+            font-weight: 700;
+        }
+
+        .click-counter {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary-blue);
+            margin-bottom: 8px;
+        }
+
+        .regen-bar {
+            height: 8px;
+            background-color: var(--light-blue);
+            border-radius: 4px;
+            margin-top: 12px;
+            overflow: hidden;
+        }
+
+        .regen-progress {
+            height: 100%;
+            background-color: var(--primary-blue);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .upgrade-btn {
+            background-color: var(--primary-blue);
+            color: var(--white);
+            border: none;
+            border-radius: 12px;
+            padding: 14px 24px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            margin-top: 24px;
+            width: 100%;
+            max-width: 320px;
+        }
+
+        .upgrade-btn:hover {
+            background-color: var(--dark-blue);
+            transform: translateY(-2px);
+        }
+
+        .upgrade-btn:active {
+            transform: translateY(0);
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--primary-blue);
+            color: var(--white);
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-weight: 600;
+            box-shadow: var(--shadow);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        .notification.show {
+            opacity: 1;
+        }
+
+        .nav-bar {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background-color: var(--white);
+            padding: 10px 0;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            bottom: 0;
+            width: 100%;
+        }
+
+        .nav-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 10px;
+            transition: var(--transition);
+        }
+
+        .nav-btn:hover {
+            background-color: var(--light-blue);
+        }
+
+        .nav-btn img {
+            width: 30px;
+            height: 30px;
+            object-fit: contain;
+            margin-bottom: 5px;
+        }
+
+        .nav-btn span {
+            font-size: 12px;
+            color: var(--dark-blue);
+            font-weight: 500;
+        }
+
+        .active-nav {
+            background-color: var(--light-blue);
+        }
+
+        .page {
+            display: none;
+            flex: 1;
+            padding: 20px;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .page.active {
+            display: flex;
+        }
+
+        .soon-page {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--dark-blue);
+        }
+
+        .profile-page {
+            width: 100%;
+            max-width: 320px;
+            background-color: var(--white);
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+        }
+
+        .profile-username {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--dark-blue);
+            margin-bottom: 20px;
+        }
+
+        .profile-balance {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary-blue);
+        }
+
+        @media (max-width: 480px) {
+            .clicker-image {
+                width: 200px;
+                height: 200px;
+            }
+            
+            .title {
+                font-size: 20px;
+            }
+            
+            .main-content {
+                margin: 10px;
+                padding: 16px;
+            }
+            
+            .sound-control {
+                top: 70px;
+                right: 15px;
+                width: 36px;
+                height: 36px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <button class="info-btn" id="infoBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M12 16V12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M12 8H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Info
+        </button>
+    </div>
+    
+    <div class="sound-control" id="soundControl">
+        <i class="fas fa-volume-up"></i>
+    </div>
+    
+    <audio id="backgroundMusic" loop autoplay>
+        <source src="/static/Waterflame_FieldofMemories.mp3" type="audio/mpeg">
+    </audio>
+    
+    <div class="page active" id="mainPage">
+        <div class="main-content">
+            <h1 class="title">Elite Clicker</h1>
+            <p class="subtitle">Нажимайте на изображение для получения $DGR</p>
+            
+            <div class="clicker-container" id="clickerContainer">
+                <img src="/static/IMG_8264.PNG" alt="Click me" class="clicker-image" id="clickerImage">
+            </div>
+            
+            <div class="stats-container">
+                <div class="click-counter">Баланс: <span id="totalClicks">0</span> $DGR</div>
+                <div class="stat-item">
+                    <span class="stat-label">Доступно кликов:</span>
+                    <span class="stat-value" id="availableClicks">100</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Сила клика:</span>
+                    <span class="stat-value" id="clickPower">1</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Восстановление:</span>
+                    <span class="stat-value" id="regenRate">1 клик/сек</span>
+                </div>
+                <div class="regen-bar">
+                    <div class="regen-progress" id="regenProgress" style="width: 100%"></div>
+                </div>
+            </div>
+            
+            <button class="upgrade-btn" id="upgradeBtn">Улучшения</button>
+        </div>
+    </div>
+    
+    <div class="page" id="tasksPage">
+        <div class="soon-page">
+            Скоро...
+        </div>
+    </div>
+    
+    <div class="page" id="profilePage">
+        <div class="profile-page">
+            <div class="profile-username" id="profileUsername">Пользователь</div>
+            <div class="profile-balance">Баланс: <span id="profileBalance">0</span> $DGR</div>
+        </div>
+    </div>
+    
+    <div class="page" id="friendsPage">
+        <div class="soon-page">
+            Скоро...
+        </div>
+    </div>
+    
+    <div class="nav-bar">
+        <button class="nav-btn" id="tasksBtn">
+            <img src="/static/task.jpg" alt="Задания">
+            <span>Задания</span>
+        </button>
+        <button class="nav-btn" id="friendsBtn">
+            <img src="/static/freands.jpg" alt="Друзья">
+            <span>Друзья</span>
+        </button>
+        <button class="nav-btn active-nav" id="mainBtn">
+            <img src="/static/Menu.jpg" alt="Меню">
+            <span>Главная</span>
+        </button>
+        <button class="nav-btn" id="profileBtn">
+            <img src="/static/balance.jpg" alt="Профиль">
+            <span>Профиль</span>
+        </button>
+    </div>
+    
+    <div class="notification" id="notification"></div>
+    
+    <script>
+        // Инициализация Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        
+        // Получаем данные пользователя из Telegram
+        const userId = tg.initDataUnsafe.user?.id;
+        const username = tg.initDataUnsafe.user?.username || 'Пользователь';
+        
+        if (!userId) {
+            console.error("User ID not found in Telegram WebApp init data");
+        }
+        
+        // Установка имени пользователя в профиле
+        document.getElementById('profileUsername').textContent = '@' + username;
+        
+        // Элементы DOM
+        const elements = {
+            clickerImage: document.getElementById('clickerImage'),
+            clickerContainer: document.getElementById('clickerContainer'),
+            totalClicks: document.getElementById('totalClicks'),
+            availableClicks: document.getElementById('availableClicks'),
+            clickPower: document.getElementById('clickPower'),
+            regenRate: document.getElementById('regenRate'),
+            regenProgress: document.getElementById('regenProgress'),
+            upgradeBtn: document.getElementById('upgradeBtn'),
+            infoBtn: document.getElementById('infoBtn'),
+            notification: document.getElementById('notification'),
+            profileBalance: document.getElementById('profileBalance'),
+            // Навигационные кнопки
+            mainBtn: document.getElementById('mainBtn'),
+            tasksBtn: document.getElementById('tasksBtn'),
+            profileBtn: document.getElementById('profileBtn'),
+            friendsBtn: document.getElementById('friendsBtn'),
+            // Страницы
+            mainPage: document.getElementById('mainPage'),
+            tasksPage: document.getElementById('tasksPage'),
+            profilePage: document.getElementById('profilePage'),
+            friendsPage: document.getElementById('friendsPage'),
+            // Элементы звука
+            soundControl: document.getElementById('soundControl'),
+            backgroundMusic: document.getElementById('backgroundMusic')
+        };
+        
+        // Состояние приложения
+        let appState = {
+            totalClicks: 0,
+            availableClicks: 100,
+            clickPower: 1,
+            maxClicks: 100,
+            regenRate: 1,
+            lastUpdate: Date.now(),
+            isMuted: localStorage.getItem('isMuted') === 'true' // Загружаем состояние из localStorage
+        };
+        
+        // Инициализация музыки
+        function initMusic() {
+            // Устанавливаем начальное состояние кнопки звука
+            if (appState.isMuted) {
+                elements.backgroundMusic.pause();
+                elements.soundControl.classList.add('muted');
+                elements.soundControl.innerHTML = '<i class="fas fa-volume-mute"></i>';
+            } else {
+                // Пытаемся автоматически воспроизвести музыку
+                elements.backgroundMusic.play()
+                    .then(() => {
+                        elements.soundControl.classList.remove('muted');
+                        elements.soundControl.innerHTML = '<i class="fas fa-volume-up"></i>';
+                    })
+                    .catch(error => {
+                        console.error('Autoplay failed:', error);
+                        appState.isMuted = true;
+                        localStorage.setItem('isMuted', 'true');
+                        elements.soundControl.classList.add('muted');
+                        elements.soundControl.innerHTML = '<i class="fas fa-volume-mute"></i>';
+                        showNotification('Нажмите на кнопку звука для включения музыки');
+                    });
+            }
+            
+            // Обработчик ошибок воспроизведения
+            elements.backgroundMusic.addEventListener('error', () => {
+                console.error('Audio playback error');
+                appState.isMuted = true;
+                localStorage.setItem('isMuted', 'true');
+                elements.soundControl.classList.add('muted');
+                elements.soundControl.innerHTML = '<i class="fas fa-volume-slash"></i>';
+            });
+        }
+        function toggleSound() {
+            appState.isMuted = !appState.isMuted;
+            localStorage.setItem('isMuted', appState.isMuted.toString());
+            // Управление
+            if (appState.isMuted) {
+                // Выключаем звук
+                elements.backgroundMusic.pause();
+                elements.soundControl.classList.add('muted');
+                elements.soundControl.innerHTML = '<i class="fas fa-volume-mute"></i>';
+            } else {
+                // Включаем звук и сбрасываем в начало
+                elements.backgroundMusic.currentTime = 0;
+                elements.backgroundMusic.play()
+                    .then(() => {
+                        elements.soundControl.classList.remove('muted');
+                        elements.soundControl.innerHTML = '<i class="fas fa-volume-up"></i>';
+                    })
+                    .catch(error => {
+                        console.error('Audio playback failed:', error);
+                        appState.isMuted = true;
+                        localStorage.setItem('isMuted', 'true');
+                        elements.soundControl.innerHTML = '<i class="fas fa-volume-slash"></i>';
+                        showNotification('Не удалось включить звук. Попробуйте еще раз.');
+                    });
+            }
+        }
+
+    async function loadUserData() {
+        try {
+            // Показываем индикатор загрузки
+            tg.MainButton.showProgress();
+            
+            const response = await fetch('/api/user', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Telegram-Init-Data': tg.initData || ''
+                },
+                body: JSON.stringify({ 
+                    userId,
+                    initData: tg.initData
+                })
+            });
+    
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to load user data');
+            }
+    
+            const data = await response.json();
+    
+            if (!data || typeof data.totalClicks === 'undefined') {
+                throw new Error('Invalid server response');
+            }
+    
+            // Обновляем состояние приложения
+            appState = {
+                ...appState,
+                totalClicks: parseInt(data.totalClicks) || 0,
+                availableClicks: parseFloat(data.availableClicks) || 100,
+                clickPower: parseInt(data.clickPower) || 1,
+                maxClicks: parseInt(data.maxClicks) || 100,
+                regenRate: parseFloat(data.regenRate) || 1,
+                lastUpdate: Date.now()
+            };
+    
+            // Обновляем интерфейс
+            updateUI();
+            
+            console.log('User data loaded successfully:', appState);
+            
+        } catch (error) {
+            console.error('Error loading user data:', error);
+            showNotification('Ошибка загрузки данных');
+            setTimeout(loadUserData, 5000);
+            
+        } finally {
+            tg.MainButton.hideProgress();
+        }
+    }
+    
+    function updateUI() {
+        try {
+            elements.totalClicks.textContent = formatNumber(appState.totalClicks);
+            elements.availableClicks.textContent = Math.floor(appState.availableClicks);
+            elements.clickPower.textContent = appState.clickPower;
+            elements.regenRate.textContent = `${appState.regenRate.toFixed(1)} клик/сек`;
+            elements.profileBalance.textContent = formatNumber(appState.totalClicks);
+    
+            const progressPercent = Math.min(100, (appState.availableClicks / appState.maxClicks) * 100);
+            elements.regenProgress.style.width = `${progressPercent}%`;
+    
+            elements.upgradeBtn.disabled = appState.totalClicks < 10;
+    
+        } catch (error) {
+            console.error('Error updating UI:', error);
+        }
+    }
+    
+    function formatNumber(num) {
+        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+    
+    async function initApp() {
+        try {
+            tg.ready();
+            initMusic();
+            await loadUserData();
+            
+            setInterval(updateClicks, 1000);
+            setInterval(loadUserData, 30000);
+            
+        } catch (error) {
+            console.error('Initialization error:', error);
+            showNotification('Ошибка инициализации приложения');
+            setTimeout(initApp, 5000);
+        }
+    }
+
+    function updateClicks() {
+        const now = Date.now();
+        const deltaTime = (now - appState.lastUpdate) / 1000;
+        
+        if (appState.availableClicks < appState.maxClicks) {
+            appState.availableClicks = Math.min(
+                appState.maxClicks,
+                appState.availableClicks + (deltaTime * appState.regenRate)
+            );
+            appState.lastUpdate = now;
+            updateUI();
+        }
+    }
+    
+    function showNotification(message) {
+        elements.notification.textContent = message;
+        elements.notification.classList.add('show');
+        
+        setTimeout(() => {
+            elements.notification.classList.remove('show');
+        }, 3000);
+    }
+    
+    elements.clickerImage.addEventListener('click', async (e) => {
+        try {
+            const clickEffect = document.createElement('div');
+            clickEffect.className = 'click-effect';
+            clickEffect.style.left = `${e.offsetX}px`;
+            clickEffect.style.top = `${e.offsetY}px`;
+            elements.clickerContainer.appendChild(clickEffect);
+            
+            setTimeout(() => {
+                elements.clickerContainer.removeChild(clickEffect);
+            }, 600);
+            
+            const response = await fetch('/api/user/click', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Telegram-Init-Data': tg.initData || ''
+                },
+                body: JSON.stringify({ userId })
+            });
+            
+            if (!response.ok) {
+                throw new Error('Click failed');
+            }
+            
+            const data = await response.json();
+            
+            appState.totalClicks = data.totalClicks;
+            appState.availableClicks = data.availableClicks;
+            updateUI();
+            
+        } catch (error) {
+            console.error('Click error:', error);
+            showNotification('Ошибка при клике');
+        }
+    });
+    
+    elements.upgradeBtn.addEventListener('click', () => {
+        showNotification('Функция улучшений скоро будет доступна!');
+    });
+    
+    elements.infoBtn.addEventListener('click', () => {
+        showNotification('Elite Clicker - зарабатывайте $DGR кликами!');
+    });
+    
+    elements.soundControl.addEventListener('click', toggleSound);
+    
+    function switchPage(pageId) {
+        document.querySelectorAll('.page').forEach(page => {
+            page.classList.remove('active');
+        });
+        
+        document.getElementById(pageId).classList.add('active');
+        
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.classList.remove('active-nav');
+        });
+        
+        if (pageId === 'mainPage') {
+            elements.mainBtn.classList.add('active-nav');
+        } else if (pageId === 'tasksPage') {
+            elements.tasksBtn.classList.add('active-nav');
+        } else if (pageId === 'profilePage') {
+            elements.profileBtn.classList.add('active-nav');
+        } else if (pageId === 'friendsPage') {
+            elements.friendsBtn.classList.add('active-nav');
+        }
+    }
+    
+    elements.mainBtn.addEventListener('click', () => switchPage('mainPage'));
+    elements.tasksBtn.addEventListener('click', () => switchPage('tasksPage'));
+    elements.profileBtn.addEventListener('click', () => switchPage('profilePage'));
+    elements.friendsBtn.addEventListener('click', () => switchPage('friendsPage'));
+
+    document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+ </html>
