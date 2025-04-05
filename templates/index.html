@@ -393,6 +393,9 @@
         <i class="fas fa-volume-mute"></i>
     </div>
     
+    <!-- Добавляем скрытый отладочный div для логов -->
+    <div id="debugLogs" style="display: none; position: fixed; bottom: 60px; left: 10px; right: 10px; max-height: 200px; overflow-y: auto; background: rgba(0,0,0,0.7); color: white; font-size: 10px; padding: 5px; z-index: 9999;"></div>
+    
     <div class="page active" id="mainPage">
         <div class="main-content">
             <h1 class="title">Elite Clicker</h1>
@@ -524,48 +527,116 @@
             audioSource: null
         };
         
+        // Функция для расширенного логирования
+        function log(message, isError = false) {
+            const timestamp = new Date().toISOString().substr(11, 8);
+            const logMessage = `[${timestamp}] ${message}`;
+            
+            console[isError ? 'error' : 'log'](logMessage);
+            
+            // Также добавляем лог в скрытый div для отладки
+            const debugLogs = document.getElementById('debugLogs');
+            if (debugLogs) {
+                const logEntry = document.createElement('div');
+                logEntry.textContent = logMessage;
+                if (isError) {
+                    logEntry.style.color = '#ff5555';
+                }
+                debugLogs.appendChild(logEntry);
+                debugLogs.scrollTop = debugLogs.scrollHeight;
+                
+                // Ограничиваем количество логов
+                while (debugLogs.children.length > 100) {
+                    debugLogs.removeChild(debugLogs.firstChild);
+                }
+            }
+        }
+        
+        // Функция для включения отображения логов
+        function toggleDebugLogs() {
+            const debugLogs = document.getElementById('debugLogs');
+            if (debugLogs) {
+                debugLogs.style.display = debugLogs.style.display === 'none' ? 'block' : 'none';
+            }
+        }
+        
+        // Скрытая комбинация клавиш для отображения логов (нажатие 'd' 5 раз)
+        let dKeyPressCount = 0;
+        let dKeyTimer = null;
+        document.addEventListener('keydown', function(e) {
+            if (e.key.toLowerCase() === 'd') {
+                dKeyPressCount++;
+                clearTimeout(dKeyTimer);
+                dKeyTimer = setTimeout(() => {
+                    dKeyPressCount = 0;
+                }, 1000);
+                
+                if (dKeyPressCount >= 5) {
+                    dKeyPressCount = 0;
+                    toggleDebugLogs();
+                }
+            }
+        });
+        
         // Инициализация музыки с использованием Web Audio API
         function initMusic() {
-            console.log('Initializing music with Web Audio API');
+            log('Инициализация музыки с Web Audio API');
             
             try {
                 // Проверяем поддержку Web Audio API
                 window.AudioContext = window.AudioContext || window.webkitAudioContext;
                 if (!window.AudioContext) {
-                    console.error('Web Audio API не поддерживается в этом браузере');
+                    log('Web Audio API не поддерживается в этом браузере', true);
                     return;
                 }
                 
+                log('Web Audio API поддерживается, создаем AudioContext');
+                
                 // Создаем аудиоконтекст
                 appState.audioContext = new AudioContext();
+                log(`AudioContext создан, текущее состояние: ${appState.audioContext.state}`);
+                
+                // Аудиофайл для воспроизведения
+                const audioFilePath = '/static/Waterflame_FieldofMemories.mp3';
+                log(`Загружаем аудиофайл: ${audioFilePath} (ок. 4 МБ)`);
                 
                 // Загружаем аудиофайл
-                fetch('/static/Waterflame_FieldofMemories.mp3')
+                fetch(audioFilePath)
                     .then(response => {
+                        log(`Ответ сервера: ${response.status} ${response.statusText}`);
                         if (!response.ok) {
-                            throw new Error('Не удалось загрузить аудиофайл');
+                            throw new Error(`Не удалось загрузить аудиофайл: ${response.status} ${response.statusText}`);
                         }
+                        log('Файл успешно получен, конвертируем в ArrayBuffer');
                         return response.arrayBuffer();
                     })
-                    .then(arrayBuffer => appState.audioContext.decodeAudioData(arrayBuffer))
+                    .then(arrayBuffer => {
+                        log(`ArrayBuffer получен, размер: ${arrayBuffer.byteLength} байт`);
+                        log('Начинаем декодирование аудио');
+                        return appState.audioContext.decodeAudioData(arrayBuffer);
+                    })
                     .then(audioBuffer => {
-                        console.log('Аудиофайл успешно загружен и декодирован');
+                        log(`Аудиофайл успешно декодирован: длительность ${audioBuffer.duration.toFixed(2)} сек, ${audioBuffer.numberOfChannels} каналов, частота дискретизации ${audioBuffer.sampleRate} Гц`);
                         appState.audioBuffer = audioBuffer;
                         appState.audioInitialized = true;
                         
                         // Пытаемся воспроизвести
                         if (!appState.isMuted) {
+                            log('Аудио не заглушено, пытаемся воспроизвести');
                             playAudio();
+                        } else {
+                            log('Аудио заглушено, автоматическое воспроизведение пропущено');
                         }
                     })
                     .catch(error => {
-                        console.error('Ошибка при загрузке аудио:', error);
+                        log(`Ошибка при загрузке или декодировании аудио: ${error.message}`, true);
                     });
                 
                 // Загружаем состояние звука из localStorage
                 const savedMuteState = localStorage.getItem('isMuted');
                 if (savedMuteState !== null) {
                     appState.isMuted = savedMuteState === 'true';
+                    log(`Загружено сохраненное состояние звука: ${appState.isMuted ? 'выключен' : 'включен'}`);
                 }
                 
                 // Обновляем UI звука
@@ -573,71 +644,141 @@
                 
                 // Добавляем обработчики для кнопки звука
                 elements.soundControl.addEventListener('click', toggleSound);
+                log('Добавлен обработчик для кнопки звука');
                 
                 // Обработчик для включения аудио после взаимодействия с пользователем
-                document.addEventListener('click', function() {
-                    if (appState.audioContext && appState.audioContext.state === 'suspended') {
-                        appState.audioContext.resume().then(() => {
-                            console.log('AudioContext успешно возобновлен после взаимодействия с пользователем');
-                            if (!appState.isMuted && appState.audioInitialized) {
-                                playAudio();
-                            }
-                        });
+                const handleUserInteraction = function() {
+                    log('Обнаружено взаимодействие пользователя');
+                    
+                    if (appState.audioContext) {
+                        log(`Текущее состояние AudioContext: ${appState.audioContext.state}`);
+                        
+                        if (appState.audioContext.state === 'suspended') {
+                            log('Пытаемся возобновить AudioContext');
+                            
+                            appState.audioContext.resume().then(() => {
+                                log('AudioContext успешно возобновлен после взаимодействия с пользователем');
+                                
+                                if (!appState.isMuted && appState.audioInitialized) {
+                                    log('Звук включен и аудио инициализировано, запускаем воспроизведение');
+                                    playAudio();
+                                } else {
+                                    log(`Воспроизведение не запущено: звук ${appState.isMuted ? 'выключен' : 'включен'}, аудио ${appState.audioInitialized ? 'инициализировано' : 'не инициализировано'}`);
+                                }
+                            }).catch(err => {
+                                log(`Ошибка при возобновлении AudioContext: ${err.message}`, true);
+                            });
+                        } else {
+                            log(`AudioContext уже в состоянии: ${appState.audioContext.state}, возобновление не требуется`);
+                        }
+                    } else {
+                        log('AudioContext не создан, невозможно возобновить воспроизведение', true);
                     }
-                }, { once: true });
+                };
+                
+                // Регистрируем обработчики взаимодействий
+                document.addEventListener('click', handleUserInteraction);
+                document.addEventListener('touchstart', handleUserInteraction);
+                log('Добавлены обработчики взаимодействия пользователя');
                 
             } catch (error) {
-                console.error('Ошибка инициализации аудио:', error);
+                log(`Ошибка инициализации аудио: ${error.message}`, true);
             }
         }
         
         // Воспроизведение аудио
         function playAudio() {
-            if (appState.isMuted || !appState.audioInitialized || !appState.audioBuffer) {
-                console.log('Не могу воспроизвести аудио: звук выключен или аудио не инициализировано');
+            log('Вызвана функция playAudio()');
+            
+            if (appState.isMuted) {
+                log('Не могу воспроизвести аудио: звук выключен');
+                return;
+            }
+            
+            if (!appState.audioInitialized) {
+                log('Не могу воспроизвести аудио: аудио не инициализировано');
+                return;
+            }
+            
+            if (!appState.audioBuffer) {
+                log('Не могу воспроизвести аудио: аудиобуфер не загружен');
                 return;
             }
             
             try {
-                // Останавливаем предыдущий источник, если он есть
-                if (appState.audioSource) {
-                    appState.audioSource.stop();
+                // Проверяем состояние аудиоконтекста
+                if (appState.audioContext.state === 'suspended') {
+                    log('AudioContext в состоянии suspended, пытаемся возобновить');
+                    appState.audioContext.resume().then(() => {
+                        log('AudioContext возобновлен, продолжаем воспроизведение');
+                        actuallyPlayAudio();
+                    }).catch(error => {
+                        log(`Ошибка при возобновлении AudioContext: ${error.message}`, true);
+                    });
+                } else {
+                    log(`AudioContext в состоянии ${appState.audioContext.state}, продолжаем воспроизведение`);
+                    actuallyPlayAudio();
                 }
-                
-                // Создаем новый источник
-                appState.audioSource = appState.audioContext.createBufferSource();
-                appState.audioSource.buffer = appState.audioBuffer;
-                appState.audioSource.loop = true;
-                
-                // Подключаем к выходу
-                appState.audioSource.connect(appState.audioContext.destination);
-                
-                // Запускаем воспроизведение
-                appState.audioSource.start(0);
-                console.log('Воспроизведение аудио запущено');
-                
-                // Обработчик окончания воспроизведения
-                appState.audioSource.onended = function() {
-                    console.log('Воспроизведение аудио завершено');
-                    if (!appState.isMuted) {
-                        playAudio(); // Перезапускаем если не в режиме mute
-                    }
-                };
             } catch (error) {
-                console.error('Ошибка воспроизведения аудио:', error);
+                log(`Ошибка воспроизведения аудио: ${error.message}`, true);
+            }
+            
+            function actuallyPlayAudio() {
+                try {
+                    // Останавливаем предыдущий источник, если он есть
+                    if (appState.audioSource) {
+                        log('Останавливаем предыдущий аудиоисточник');
+                        try {
+                            appState.audioSource.stop();
+                        } catch (e) {
+                            log(`Не удалось остановить предыдущий источник: ${e.message}`);
+                        }
+                    }
+                    
+                    // Создаем новый источник
+                    log('Создаем новый аудиоисточник');
+                    appState.audioSource = appState.audioContext.createBufferSource();
+                    appState.audioSource.buffer = appState.audioBuffer;
+                    appState.audioSource.loop = true;
+                    
+                    // Подключаем к выходу
+                    log('Подключаем аудиоисточник к выходу');
+                    appState.audioSource.connect(appState.audioContext.destination);
+                    
+                    // Запускаем воспроизведение
+                    log('Запускаем воспроизведение');
+                    appState.audioSource.start(0);
+                    log('Воспроизведение аудио запущено успешно');
+                    
+                    // Обработчик окончания воспроизведения
+                    appState.audioSource.onended = function(event) {
+                        log(`Воспроизведение аудио завершено, причина: ${event ? event.type : 'неизвестно'}`);
+                        if (!appState.isMuted) {
+                            log('Звук включен, перезапускаем воспроизведение');
+                            playAudio();
+                        }
+                    };
+                } catch (error) {
+                    log(`Ошибка при попытке воспроизведения: ${error.message}`, true);
+                }
             }
         }
         
         // Остановка аудио
         function stopAudio() {
+            log('Вызвана функция stopAudio()');
+            
             if (appState.audioSource) {
                 try {
+                    log('Останавливаем аудиоисточник');
                     appState.audioSource.stop();
                     appState.audioSource = null;
-                    console.log('Воспроизведение аудио остановлено');
+                    log('Воспроизведение аудио остановлено');
                 } catch (error) {
-                    console.error('Ошибка при остановке аудио:', error);
+                    log(`Ошибка при остановке аудио: ${error.message}`, true);
                 }
+            } else {
+                log('Нет активного аудиоисточника для остановки');
             }
         }
         
@@ -664,16 +805,25 @@
                 e.stopPropagation();
             }
             
-            console.log('Переключение звука, текущее состояние:', appState.isMuted);
+            log(`Переключение звука, текущее состояние: ${appState.isMuted ? 'выключен' : 'включен'}`);
             appState.isMuted = !appState.isMuted;
             localStorage.setItem('isMuted', appState.isMuted.toString());
             
+            log(`Новое состояние звука: ${appState.isMuted ? 'выключен' : 'включен'}`);
+            
             // Если аудиоконтекст в состоянии suspended, возобновляем его
             if (appState.audioContext && appState.audioContext.state === 'suspended') {
-                appState.audioContext.resume();
+                log('Возобновляем приостановленный AudioContext');
+                appState.audioContext.resume().then(() => {
+                    log('AudioContext успешно возобновлен');
+                    updateSoundUI();
+                }).catch(error => {
+                    log(`Ошибка при возобновлении AudioContext: ${error.message}`, true);
+                    updateSoundUI();
+                });
+            } else {
+                updateSoundUI();
             }
-            
-            updateSoundUI();
             
             // Показываем уведомление
             showNotification(appState.isMuted ? 'Звук выключен' : 'Звук включен');
