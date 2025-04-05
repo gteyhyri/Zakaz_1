@@ -389,13 +389,12 @@
         </button>
     </div>
     
-    <div class="sound-control" id="soundControl">
-        <i class="fas fa-volume-up"></i>
+    <div class="sound-control muted" id="soundControl">
+        <i class="fas fa-volume-mute"></i>
     </div>
     
-    <audio id="backgroundMusic" loop>
-        <source src="/static/Waterflame_FieldofMemories.mp3" type="audio/mpeg">
-    </audio>
+    <!-- Добавляем скрытый отладочный div для логов -->
+    <div id="debugLogs" style="display: none; position: fixed; bottom: 60px; left: 10px; right: 10px; max-height: 200px; overflow-y: auto; background: rgba(0,0,0,0.7); color: white; font-size: 10px; padding: 5px; z-index: 9999;"></div>
     
     <div class="page active" id="mainPage">
         <div class="main-content">
@@ -509,8 +508,7 @@
             profilePage: document.getElementById('profilePage'),
             friendsPage: document.getElementById('friendsPage'),
             // Элементы звука
-            soundControl: document.getElementById('soundControl'),
-            backgroundMusic: document.getElementById('backgroundMusic')
+            soundControl: document.getElementById('soundControl')
         };
         
         // Состояние приложения
@@ -521,33 +519,319 @@
             maxClicks: 100,
             regenRate: 1,
             lastUpdate: Date.now(),
-            isMuted: false
+            isMuted: true,
+            wasInteraction: false,
+            audioInitialized: false,
+            audioContext: null,
+            audioBuffer: null,
+            audioSource: null
         };
         
-        // Управление звуком
-        function toggleSound() {
-            appState.isMuted = !appState.isMuted;
+        // Функция для расширенного логирования
+        function log(message, isError = false) {
+            const timestamp = new Date().toISOString().substr(11, 8);
+            const logMessage = `[${timestamp}] ${message}`;
             
-            if (appState.isMuted) {
-                elements.backgroundMusic.pause();
-                elements.soundControl.classList.add('muted');
-                elements.soundControl.innerHTML = '<i class="fas fa-volume-mute"></i>';
-            } else {
-                elements.backgroundMusic.play()
-                    .then(() => {
-                        elements.soundControl.classList.remove('muted');
-                        elements.soundControl.innerHTML = '<i class="fas fa-volume-up"></i>';
-                    })
-                    .catch(error => {
-                        console.error('Audio playback failed:', error);
-                        elements.soundControl.innerHTML = '<i class="fas fa-volume-slash"></i>';
-                    });
+            console[isError ? 'error' : 'log'](logMessage);
+            
+            // Также добавляем лог в скрытый div для отладки
+            const debugLogs = document.getElementById('debugLogs');
+            if (debugLogs) {
+                const logEntry = document.createElement('div');
+                logEntry.textContent = logMessage;
+                if (isError) {
+                    logEntry.style.color = '#ff5555';
+                }
+                debugLogs.appendChild(logEntry);
+                debugLogs.scrollTop = debugLogs.scrollHeight;
+                
+                // Ограничиваем количество логов
+                while (debugLogs.children.length > 100) {
+                    debugLogs.removeChild(debugLogs.firstChild);
+                }
             }
         }
         
+        // Функция для включения отображения логов
+        function toggleDebugLogs() {
+            const debugLogs = document.getElementById('debugLogs');
+            if (debugLogs) {
+                debugLogs.style.display = debugLogs.style.display === 'none' ? 'block' : 'none';
+            }
+        }
+        
+        // Скрытая комбинация клавиш для отображения логов (нажатие 'd' 5 раз)
+        let dKeyPressCount = 0;
+        let dKeyTimer = null;
+        document.addEventListener('keydown', function(e) {
+            if (e.key.toLowerCase() === 'd') {
+                dKeyPressCount++;
+                clearTimeout(dKeyTimer);
+                dKeyTimer = setTimeout(() => {
+                    dKeyPressCount = 0;
+                }, 1000);
+                
+                if (dKeyPressCount >= 5) {
+                    dKeyPressCount = 0;
+                    toggleDebugLogs();
+                }
+            }
+        });
+        
+        // Инициализация музыки с использованием Web Audio API
+        function initMusic() {
+            log('Инициализация музыки с Web Audio API');
+            
+            try {
+                // Проверяем поддержку Web Audio API
+                window.AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!window.AudioContext) {
+                    log('Web Audio API не поддерживается в этом браузере', true);
+                    return;
+                }
+                
+                log('Web Audio API поддерживается, создаем AudioContext');
+                
+                // Создаем аудиоконтекст
+                appState.audioContext = new AudioContext();
+                log(`AudioContext создан, текущее состояние: ${appState.audioContext.state}`);
+                
+                // Аудиофайл для воспроизведения
+                const audioFilePath = '/static/Waterflame_FieldofMemories.mp3';
+                log(`Загружаем аудиофайл: ${audioFilePath} (ок. 4 МБ)`);
+                
+                // Загружаем аудиофайл
+                fetch(audioFilePath)
+                    .then(response => {
+                        log(`Ответ сервера: ${response.status} ${response.statusText}`);
+                        if (!response.ok) {
+                            throw new Error(`Не удалось загрузить аудиофайл: ${response.status} ${response.statusText}`);
+                        }
+                        log('Файл успешно получен, конвертируем в ArrayBuffer');
+                        return response.arrayBuffer();
+                    })
+                    .then(arrayBuffer => {
+                        log(`ArrayBuffer получен, размер: ${arrayBuffer.byteLength} байт`);
+                        log('Начинаем декодирование аудио');
+                        return appState.audioContext.decodeAudioData(arrayBuffer);
+                    })
+                    .then(audioBuffer => {
+                        log(`Аудиофайл успешно декодирован: длительность ${audioBuffer.duration.toFixed(2)} сек, ${audioBuffer.numberOfChannels} каналов, частота дискретизации ${audioBuffer.sampleRate} Гц`);
+                        appState.audioBuffer = audioBuffer;
+                        appState.audioInitialized = true;
+                        
+                        // Пытаемся воспроизвести
+                        if (!appState.isMuted) {
+                            log('Аудио не заглушено, пытаемся воспроизвести');
+                            playAudio();
+                        } else {
+                            log('Аудио заглушено, автоматическое воспроизведение пропущено');
+                        }
+                    })
+                    .catch(error => {
+                        log(`Ошибка при загрузке или декодировании аудио: ${error.message}`, true);
+                    });
+                
+                // Загружаем состояние звука из localStorage
+                const savedMuteState = localStorage.getItem('isMuted');
+                if (savedMuteState !== null) {
+                    appState.isMuted = savedMuteState === 'true';
+                    log(`Загружено сохраненное состояние звука: ${appState.isMuted ? 'выключен' : 'включен'}`);
+                }
+                
+                // Обновляем UI звука
+                updateSoundUI();
+                
+                // Добавляем обработчики для кнопки звука
+                elements.soundControl.addEventListener('click', toggleSound);
+                log('Добавлен обработчик для кнопки звука');
+                
+                // Обработчик для включения аудио после взаимодействия с пользователем
+                const handleUserInteraction = function() {
+                    log('Обнаружено взаимодействие пользователя');
+                    
+                    if (appState.audioContext) {
+                        log(`Текущее состояние AudioContext: ${appState.audioContext.state}`);
+                        
+                        if (appState.audioContext.state === 'suspended') {
+                            log('Пытаемся возобновить AudioContext');
+                            
+                            appState.audioContext.resume().then(() => {
+                                log('AudioContext успешно возобновлен после взаимодействия с пользователем');
+                                
+                                if (!appState.isMuted && appState.audioInitialized) {
+                                    log('Звук включен и аудио инициализировано, запускаем воспроизведение');
+                                    playAudio();
+                                } else {
+                                    log(`Воспроизведение не запущено: звук ${appState.isMuted ? 'выключен' : 'включен'}, аудио ${appState.audioInitialized ? 'инициализировано' : 'не инициализировано'}`);
+                                }
+                            }).catch(err => {
+                                log(`Ошибка при возобновлении AudioContext: ${err.message}`, true);
+                            });
+                        } else {
+                            log(`AudioContext уже в состоянии: ${appState.audioContext.state}, возобновление не требуется`);
+                        }
+                    } else {
+                        log('AudioContext не создан, невозможно возобновить воспроизведение', true);
+                    }
+                };
+                
+                // Регистрируем обработчики взаимодействий
+                document.addEventListener('click', handleUserInteraction);
+                document.addEventListener('touchstart', handleUserInteraction);
+                log('Добавлены обработчики взаимодействия пользователя');
+                
+            } catch (error) {
+                log(`Ошибка инициализации аудио: ${error.message}`, true);
+            }
+        }
+        
+        // Воспроизведение аудио
+        function playAudio() {
+            log('Вызвана функция playAudio()');
+            
+            if (appState.isMuted) {
+                log('Не могу воспроизвести аудио: звук выключен');
+                return;
+            }
+            
+            if (!appState.audioInitialized) {
+                log('Не могу воспроизвести аудио: аудио не инициализировано');
+                return;
+            }
+            
+            if (!appState.audioBuffer) {
+                log('Не могу воспроизвести аудио: аудиобуфер не загружен');
+                return;
+            }
+            
+            try {
+                // Проверяем состояние аудиоконтекста
+                if (appState.audioContext.state === 'suspended') {
+                    log('AudioContext в состоянии suspended, пытаемся возобновить');
+                    appState.audioContext.resume().then(() => {
+                        log('AudioContext возобновлен, продолжаем воспроизведение');
+                        actuallyPlayAudio();
+                    }).catch(error => {
+                        log(`Ошибка при возобновлении AudioContext: ${error.message}`, true);
+                    });
+                } else {
+                    log(`AudioContext в состоянии ${appState.audioContext.state}, продолжаем воспроизведение`);
+                    actuallyPlayAudio();
+                }
+            } catch (error) {
+                log(`Ошибка воспроизведения аудио: ${error.message}`, true);
+            }
+            
+            function actuallyPlayAudio() {
+                try {
+                    // Останавливаем предыдущий источник, если он есть
+                    if (appState.audioSource) {
+                        log('Останавливаем предыдущий аудиоисточник');
+                        try {
+                            appState.audioSource.stop();
+                        } catch (e) {
+                            log(`Не удалось остановить предыдущий источник: ${e.message}`);
+                        }
+                    }
+                    
+                    // Создаем новый источник
+                    log('Создаем новый аудиоисточник');
+                    appState.audioSource = appState.audioContext.createBufferSource();
+                    appState.audioSource.buffer = appState.audioBuffer;
+                    appState.audioSource.loop = true;
+                    
+                    // Подключаем к выходу
+                    log('Подключаем аудиоисточник к выходу');
+                    appState.audioSource.connect(appState.audioContext.destination);
+                    
+                    // Запускаем воспроизведение
+                    log('Запускаем воспроизведение');
+                    appState.audioSource.start(0);
+                    log('Воспроизведение аудио запущено успешно');
+                    
+                    // Обработчик окончания воспроизведения
+                    appState.audioSource.onended = function(event) {
+                        log(`Воспроизведение аудио завершено, причина: ${event ? event.type : 'неизвестно'}`);
+                        if (!appState.isMuted) {
+                            log('Звук включен, перезапускаем воспроизведение');
+                            playAudio();
+                        }
+                    };
+                } catch (error) {
+                    log(`Ошибка при попытке воспроизведения: ${error.message}`, true);
+                }
+            }
+        }
+        
+        // Остановка аудио
+        function stopAudio() {
+            log('Вызвана функция stopAudio()');
+            
+            if (appState.audioSource) {
+                try {
+                    log('Останавливаем аудиоисточник');
+                    appState.audioSource.stop();
+                    appState.audioSource = null;
+                    log('Воспроизведение аудио остановлено');
+                } catch (error) {
+                    log(`Ошибка при остановке аудио: ${error.message}`, true);
+                }
+            } else {
+                log('Нет активного аудиоисточника для остановки');
+            }
+        }
+        
+        // Обновление UI звука
+        function updateSoundUI() {
+            if (appState.isMuted) {
+                elements.soundControl.classList.add('muted');
+                elements.soundControl.innerHTML = '<i class="fas fa-volume-mute"></i>';
+                stopAudio();
+            } else {
+                elements.soundControl.classList.remove('muted');
+                elements.soundControl.innerHTML = '<i class="fas fa-volume-up"></i>';
+                if (appState.audioInitialized && appState.audioBuffer) {
+                    playAudio();
+                }
+            }
+        }
+        
+        // Переключение звука
+        function toggleSound(e) {
+            // Предотвращаем распространение события клика
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            log(`Переключение звука, текущее состояние: ${appState.isMuted ? 'выключен' : 'включен'}`);
+            appState.isMuted = !appState.isMuted;
+            localStorage.setItem('isMuted', appState.isMuted.toString());
+            
+            log(`Новое состояние звука: ${appState.isMuted ? 'выключен' : 'включен'}`);
+            
+            // Если аудиоконтекст в состоянии suspended, возобновляем его
+            if (appState.audioContext && appState.audioContext.state === 'suspended') {
+                log('Возобновляем приостановленный AudioContext');
+                appState.audioContext.resume().then(() => {
+                    log('AudioContext успешно возобновлен');
+                    updateSoundUI();
+                }).catch(error => {
+                    log(`Ошибка при возобновлении AudioContext: ${error.message}`, true);
+                    updateSoundUI();
+                });
+            } else {
+                updateSoundUI();
+            }
+            
+            // Показываем уведомление
+            showNotification(appState.isMuted ? 'Звук выключен' : 'Звук включен');
+        }
+        
+        // Загрузка данных пользователя
         async function loadUserData() {
             try {
-                // Показываем индикатор загрузки
                 tg.MainButton.showProgress();
                 
                 const response = await fetch('/api/user', {
@@ -558,24 +842,16 @@
                     },
                     body: JSON.stringify({ 
                         userId,
-                        initData: tg.initData // Добавляем данные Telegram для верификации на сервере
+                        initData: tg.initData
                     })
                 });
         
-                // Проверяем статус ответа
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || 'Failed to load user data');
+                    throw new Error('Failed to load user data');
                 }
         
                 const data = await response.json();
         
-                // Валидация полученных данных
-                if (!data || typeof data.totalClicks === 'undefined') {
-                    throw new Error('Invalid server response');
-                }
-        
-                // Обновляем состояние приложения
                 appState = {
                     ...appState,
                     totalClicks: parseInt(data.totalClicks) || 0,
@@ -586,89 +862,41 @@
                     lastUpdate: Date.now()
                 };
         
-                // Обновляем интерфейс
                 updateUI();
-                
-                // Логируем успешную загрузку
-                console.log('User data loaded successfully:', appState);
                 
             } catch (error) {
                 console.error('Error loading user data:', error);
-                
-                // Показываем пользователю сообщение об ошибке
                 showNotification('Ошибка загрузки данных');
-                
-                // Пробуем загрузить данные снова через 5 секунд
                 setTimeout(loadUserData, 5000);
                 
             } finally {
-                // Скрываем индикатор загрузки
                 tg.MainButton.hideProgress();
             }
         }
         
-        // Улучшенная функция updateUI
+        // Обновление UI
         function updateUI() {
-            try {
-                // Обновляем основные показатели
-                elements.totalClicks.textContent = formatNumber(appState.totalClicks);
-                elements.availableClicks.textContent = Math.floor(appState.availableClicks);
-                elements.clickPower.textContent = appState.clickPower;
-                elements.regenRate.textContent = `${appState.regenRate.toFixed(1)} клик/сек`;
-                elements.profileBalance.textContent = formatNumber(appState.totalClicks);
-        
-                // Обновляем прогресс-бар
-                const progressPercent = Math.min(100, (appState.availableClicks / appState.maxClicks) * 100);
-                elements.regenProgress.style.width = `${progressPercent}%`;
-        
-                // Обновляем состояние кнопки улучшений
-                elements.upgradeBtn.disabled = appState.totalClicks < 10; // Пример условия
-        
-            } catch (error) {
-                console.error('Error updating UI:', error);
-            }
+            elements.totalClicks.textContent = formatNumber(appState.totalClicks);
+            elements.availableClicks.textContent = Math.floor(appState.availableClicks);
+            elements.clickPower.textContent = appState.clickPower;
+            elements.regenRate.textContent = `${appState.regenRate.toFixed(1)} клик/сек`;
+            elements.profileBalance.textContent = formatNumber(appState.totalClicks);
+    
+            const progressPercent = Math.min(100, (appState.availableClicks / appState.maxClicks) * 100);
+            elements.regenProgress.style.width = `${progressPercent}%`;
+    
+            elements.upgradeBtn.disabled = appState.totalClicks < 10;
         }
         
-        // Вспомогательная функция для форматирования чисел
+        // Форматирование чисел
         function formatNumber(num) {
             return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
         }
         
-        // Инициализация приложения с обработкой ошибок
-        async function initApp() {
-            try {
-                // Инициализируем Telegram WebApp
-                tg.ready();
-                
-                // Загружаем данные пользователя
-                await loadUserData();
-                
-                // Настраиваем интервалы для автообновления
-                setInterval(updateClicks, 1000);
-                setInterval(loadUserData, 30000); // Полная синхронизация каждые 30 секунд
-                
-            } catch (error) {
-                console.error('Initialization error:', error);
-                showNotification('Ошибка инициализации приложения');
-                
-                // Пробуем инициализировать снова
-                setTimeout(initApp, 5000);
-            }
-        }
-        // Функция для показа уведомлений
-        function showNotification(message) {
-            elements.notification.textContent = message;
-            elements.notification.classList.add('show');
-            
-            setTimeout(() => {
-                elements.notification.classList.remove('show');
-            }, 3000);
-        }
-        
-        // Функция для обновления кликов
+        // Обновление кликов
         function updateClicks() {
             const now = Date.now();
-            const deltaTime = (now - appState.lastUpdate) / 1000; // в секундах
+            const deltaTime = (now - appState.lastUpdate) / 1000;
             
             if (appState.availableClicks < appState.maxClicks) {
                 appState.availableClicks = Math.min(
@@ -680,10 +908,32 @@
             }
         }
         
-        // Обработчик кликов по основной кнопке
+        // Показать уведомление
+        function showNotification(message) {
+            elements.notification.textContent = message;
+            elements.notification.classList.add('show');
+            
+            setTimeout(() => {
+                elements.notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Обработчик клика
         elements.clickerImage.addEventListener('click', async (e) => {
+            // Возобновляем аудиоконтекст при клике
+            if (appState.audioContext && appState.audioContext.state === 'suspended') {
+                try {
+                    await appState.audioContext.resume();
+                    console.log('AudioContext возобновлен после клика');
+                    if (!appState.isMuted && appState.audioInitialized) {
+                        playAudio();
+                    }
+                } catch (error) {
+                    console.error('Ошибка при возобновлении AudioContext:', error);
+                }
+            }
+            
             try {
-                // Создаем эффект клика
                 const clickEffect = document.createElement('div');
                 clickEffect.className = 'click-effect';
                 clickEffect.style.left = `${e.offsetX}px`;
@@ -691,10 +941,9 @@
                 elements.clickerContainer.appendChild(clickEffect);
                 
                 setTimeout(() => {
-                    elements.clickerContainer.removeChild(clickEffect);
+                    clickEffect.remove();
                 }, 600);
                 
-                // Отправляем запрос на сервер
                 const response = await fetch('/api/user/click', {
                     method: 'POST',
                     headers: {
@@ -710,7 +959,6 @@
                 
                 const data = await response.json();
                 
-                // Обновляем состояние
                 appState.totalClicks = data.totalClicks;
                 appState.availableClicks = data.availableClicks;
                 updateUI();
@@ -721,35 +969,29 @@
             }
         });
         
-        // Обработчик кнопки улучшений
+        // Обработчики кнопок
         elements.upgradeBtn.addEventListener('click', () => {
+            handleFirstInteraction();
             showNotification('Функция улучшений скоро будет доступна!');
         });
         
-        // Обработчик кнопки информации
         elements.infoBtn.addEventListener('click', () => {
+            handleFirstInteraction();
             showNotification('Elite Clicker - зарабатывайте $DGR кликами!');
         });
         
-        // Обработчик звука
-        elements.soundControl.addEventListener('click', toggleSound);
-        
-        // Функции для навигации
+        // Переключение страниц
         function switchPage(pageId) {
-            // Скрываем все страницы
             document.querySelectorAll('.page').forEach(page => {
                 page.classList.remove('active');
             });
             
-            // Показываем выбранную страницу
             document.getElementById(pageId).classList.add('active');
             
-            // Обновляем активную кнопку в навигации
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.classList.remove('active-nav');
             });
             
-            // Устанавливаем активную кнопку
             if (pageId === 'mainPage') {
                 elements.mainBtn.classList.add('active-nav');
             } else if (pageId === 'tasksPage') {
@@ -759,15 +1001,59 @@
             } else if (pageId === 'friendsPage') {
                 elements.friendsBtn.classList.add('active-nav');
             }
+            
+            handleFirstInteraction();
         }
         
-        // Обработчики навигационных кнопок
-        elements.mainBtn.addEventListener('click', () => switchPage('mainPage'));
-        elements.tasksBtn.addEventListener('click', () => switchPage('tasksPage'));
-        elements.profileBtn.addEventListener('click', () => switchPage('profilePage'));
-        elements.friendsBtn.addEventListener('click', () => switchPage('friendsPage'));
-   // Запуск приложения после загрузки DOM
+        // Инициализация приложения
+        async function initApp() {
+            try {
+                console.log('Инициализация приложения...');
+                
+                // Проверяем наличие Telegram WebApp
+                if (window.Telegram && window.Telegram.WebApp) {
+                    tg.ready();
+                    console.log('Telegram WebApp готов');
+                } else {
+                    console.warn('Telegram WebApp не обнаружен, работаем в режиме отладки');
+                }
+                
+                // Инициализируем музыку
+                initMusic();
+                
+                // Загружаем данные пользователя
+                try {
+                    await loadUserData();
+                } catch (error) {
+                    console.warn('Не удалось загрузить данные пользователя:', error);
+                    // Продолжаем работу даже без данных пользователя для локальной отладки
+                }
+                
+                setInterval(updateClicks, 1000);
+                
+                // Если мы вне Telegram, не пытаемся повторно загружать данные
+                if (window.Telegram && window.Telegram.WebApp) {
+                    setInterval(loadUserData, 30000);
+                }
+                
+                // Обработчики навигации
+                elements.mainBtn.addEventListener('click', () => switchPage('mainPage'));
+                elements.tasksBtn.addEventListener('click', () => switchPage('tasksPage'));
+                elements.profileBtn.addEventListener('click', () => switchPage('profilePage'));
+                elements.friendsBtn.addEventListener('click', () => switchPage('friendsPage'));
+                
+                // Добавляем уведомление об успешной загрузке
+                showNotification('Приложение загружено');
+                
+            } catch (error) {
+                console.error('Ошибка инициализации приложения:', error);
+                showNotification('Ошибка инициализации приложения');
+                setTimeout(initApp, 5000);
+            }
+        }
+        
+        // Запуск приложения
         document.addEventListener('DOMContentLoaded', initApp);
     </script>
-</body> 
-</html> 
+</body>
+</html>
