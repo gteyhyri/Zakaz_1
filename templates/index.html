@@ -393,7 +393,7 @@
         <i class="fas fa-volume-mute"></i>
     </div>
     
-    <audio id="backgroundMusic" preload="auto" loop>
+    <audio id="backgroundMusic" preload="auto" loop muted>
         <source src="/static/Waterflame_FieldofMemories.mp3" type="audio/mpeg">
     </audio>
     
@@ -521,7 +521,7 @@
             maxClicks: 100,
             regenRate: 1,
             lastUpdate: Date.now(),
-            isMuted: false,
+            isMuted: true,
             wasInteraction: false,
             audioInitialized: false
         };
@@ -530,53 +530,38 @@
         function initMusic() {
             console.log('Initializing music for Telegram Mini App');
             
-            // Загружаем состояние звука из localStorage
-            const savedMuteState = localStorage.getItem('isMuted');
-            if (savedMuteState !== null) {
-                appState.isMuted = savedMuteState === 'true';
-                console.log('Loaded saved mute state:', appState.isMuted);
-            }
-            
-            // Устанавливаем громкость и другие параметры
-            elements.backgroundMusic.volume = 0.3;
-            elements.backgroundMusic.muted = appState.isMuted;
+            // Устанавливаем громкость
+            elements.backgroundMusic.volume = 0.5;
             
             // Обновляем UI звука
             updateSoundUI();
             
-            // Регистрируем событие для воспроизведения после взаимодействия
-            document.addEventListener('click', initializeAudioOnInteraction, { once: true });
-            elements.clickerImage.addEventListener('click', initializeAudioOnInteraction, { once: true });
+            // Добавляем обработчики для включения звука
+            document.addEventListener('click', tryPlayMusic, { once: true });
+            elements.clickerImage.addEventListener('click', tryPlayMusic);
+            elements.soundControl.addEventListener('click', toggleSound);
             
-            // Также пытаемся воспроизвести при открытии WebApp
-            tg.onEvent('viewportChanged', function() {
-                console.log('Viewport changed, trying to initialize audio');
-                initializeAudioOnInteraction();
-            });
+            // Попытка воспроизведения при загрузке
+            tryPlayMusic();
         }
         
-        // Инициализация аудио после взаимодействия пользователя
-        function initializeAudioOnInteraction() {
-            if (appState.audioInitialized || appState.isMuted) return;
+        // Попытка воспроизвести музыку
+        function tryPlayMusic() {
+            if (appState.isMuted) return;
             
-            console.log('Initializing audio after user interaction');
-            appState.audioInitialized = true;
-            appState.wasInteraction = true;
+            console.log('Trying to play music...');
             
             try {
                 elements.backgroundMusic.muted = false;
-                const promise = elements.backgroundMusic.play();
-                
-                if (promise !== undefined) {
-                    promise.then(() => {
-                        console.log('Audio playback started successfully');
-                    }).catch(error => {
-                        console.error('Audio playback failed despite user interaction:', error);
-                        showNotification('Не удалось воспроизвести звук. Нажмите на иконку звука.');
-                    });
-                }
-            } catch (e) {
-                console.error('Error in audio initialization:', e);
+                elements.backgroundMusic.play().then(() => {
+                    console.log('Audio started successfully');
+                    appState.audioInitialized = true;
+                }).catch(error => {
+                    console.error('Audio autoplay was prevented:', error);
+                    // Следующая попытка будет после явного клика пользователя
+                });
+            } catch (error) {
+                console.error('Error playing audio:', error);
             }
         }
         
@@ -587,34 +572,34 @@
                 elements.soundControl.innerHTML = '<i class="fas fa-volume-mute"></i>';
                 if (elements.backgroundMusic) {
                     elements.backgroundMusic.pause();
+                    elements.backgroundMusic.muted = true;
                 }
             } else {
                 elements.soundControl.classList.remove('muted');
                 elements.soundControl.innerHTML = '<i class="fas fa-volume-up"></i>';
-                if (elements.backgroundMusic && appState.audioInitialized) {
-                    try {
-                        elements.backgroundMusic.play().catch(e => console.error('Play failed in updateSoundUI:', e));
-                    } catch (e) {
-                        console.error('Error in updateSoundUI:', e);
-                    }
-                }
+                tryPlayMusic();
             }
         }
         
         // Переключение звука
-        function toggleSound() {
-            console.log('Toggling sound, current state:', appState.isMuted);
+        function toggleSound(e) {
+            // Предотвращаем распространение события клика
+            if (e) {
+                e.stopPropagation();
+            }
+            
+            console.log('Toggle sound button clicked');
             appState.isMuted = !appState.isMuted;
             localStorage.setItem('isMuted', appState.isMuted.toString());
             
-            if (!appState.audioInitialized && !appState.isMuted) {
-                initializeAudioOnInteraction();
-            }
-            
+            console.log('Sound state changed to:', appState.isMuted ? 'muted' : 'unmuted');
             updateSoundUI();
             
+            // Показываем уведомление
             if (!appState.isMuted) {
-                showNotification(appState.audioInitialized ? 'Звук включен' : 'Звук будет включен после вашего взаимодействия');
+                showNotification('Звук включен');
+            } else {
+                showNotification('Звук выключен');
             }
         }
         
@@ -712,7 +697,7 @@
             if (!appState.wasInteraction) {
                 appState.wasInteraction = true;
                 // Пытаемся включить звук при первом взаимодействии
-                initializeAudioOnInteraction();
+                tryPlayMusic();
             }
             
             try {
@@ -762,11 +747,6 @@
             showNotification('Elite Clicker - зарабатывайте $DGR кликами!');
         });
         
-        elements.soundControl.addEventListener('click', () => {
-            handleFirstInteraction();
-            toggleSound();
-        });
-        
         // Переключение страниц
         function switchPage(pageId) {
             document.querySelectorAll('.page').forEach(page => {
@@ -797,27 +777,14 @@
             try {
                 tg.ready();
                 
-                // Добавляем обработчик события viewportChanged для запуска аудио
-                tg.onEvent('viewportChanged', function() {
-                    console.log('Viewport changed');
-                    if (!appState.audioInitialized && !appState.isMuted) {
-                        initializeAudioOnInteraction();
-                    }
-                });
-                
-                initMusic();
                 await loadUserData();
+                initMusic();
                 
                 setInterval(updateClicks, 1000);
                 setInterval(loadUserData, 30000);
                 
                 // Обработчики навигации
-                elements.mainBtn.addEventListener('click', () => {
-                    switchPage('mainPage');
-                    if (!appState.audioInitialized && !appState.isMuted) {
-                        initializeAudioOnInteraction();
-                    }
-                });
+                elements.mainBtn.addEventListener('click', () => switchPage('mainPage'));
                 elements.tasksBtn.addEventListener('click', () => switchPage('tasksPage'));
                 elements.profileBtn.addEventListener('click', () => switchPage('profilePage'));
                 elements.friendsBtn.addEventListener('click', () => switchPage('friendsPage'));
