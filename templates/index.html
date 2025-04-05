@@ -99,6 +99,27 @@
             color: var(--white);
         }
 
+        .sound-control.loading {
+            background-color: var(--primary-blue);
+            opacity: 0.8;
+        }
+        
+        .sound-control.playing {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(42, 127, 255, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(42, 127, 255, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(42, 127, 255, 0);
+            }
+        }
+
         .main-content {
             flex: 1;
             display: flex;
@@ -396,6 +417,9 @@
     <!-- Добавляем скрытый отладочный div для логов -->
     <div id="debugLogs" style="display: none; position: fixed; bottom: 60px; left: 10px; right: 10px; max-height: 200px; overflow-y: auto; background: rgba(0,0,0,0.7); color: white; font-size: 10px; padding: 5px; z-index: 9999;"></div>
     
+    <!-- Добавляем запасной элемент audio для совместимости -->
+    <audio id="fallbackAudio" preload="auto" loop src="/static/Waterflame_FieldofMemories.mp3" style="display:none;"></audio>
+    
     <div class="page active" id="mainPage">
         <div class="main-content">
             <h1 class="title">Elite Clicker</h1>
@@ -508,7 +532,8 @@
             profilePage: document.getElementById('profilePage'),
             friendsPage: document.getElementById('friendsPage'),
             // Элементы звука
-            soundControl: document.getElementById('soundControl')
+            soundControl: document.getElementById('soundControl'),
+            fallbackAudio: document.getElementById('fallbackAudio')
         };
         
         // Состояние приложения
@@ -524,7 +549,9 @@
             audioInitialized: false,
             audioContext: null,
             audioBuffer: null,
-            audioSource: null
+            audioSource: null,
+            useWebAudio: true,     // Флаг для переключения между Web Audio API и стандартным Audio
+            audioPlayAttempts: 0   // Счетчик попыток воспроизведения
         };
         
         // Функция для расширенного логирования
@@ -578,15 +605,18 @@
             }
         });
         
-        // Инициализация музыки с использованием Web Audio API
+        // Инициализация музыки с использованием Web Audio API и запасного варианта
         function initMusic() {
-            log('Инициализация музыки с Web Audio API');
+            log('Инициализация музыки');
             
             try {
                 // Проверяем поддержку Web Audio API
                 window.AudioContext = window.AudioContext || window.webkitAudioContext;
+                
                 if (!window.AudioContext) {
-                    log('Web Audio API не поддерживается в этом браузере', true);
+                    log('Web Audio API не поддерживается, используем запасной вариант', true);
+                    appState.useWebAudio = false;
+                    initFallbackAudio();
                     return;
                 }
                 
@@ -611,25 +641,40 @@
                         return response.arrayBuffer();
                     })
                     .then(arrayBuffer => {
-                        log(`ArrayBuffer получен, размер: ${arrayBuffer.byteLength} байт`);
+                        log(`ArrayBuffer получен, размер: ${(arrayBuffer.byteLength / 1024 / 1024).toFixed(2)} МБ`);
                         log('Начинаем декодирование аудио');
-                        return appState.audioContext.decodeAudioData(arrayBuffer);
-                    })
-                    .then(audioBuffer => {
-                        log(`Аудиофайл успешно декодирован: длительность ${audioBuffer.duration.toFixed(2)} сек, ${audioBuffer.numberOfChannels} каналов, частота дискретизации ${audioBuffer.sampleRate} Гц`);
-                        appState.audioBuffer = audioBuffer;
-                        appState.audioInitialized = true;
                         
-                        // Пытаемся воспроизвести
-                        if (!appState.isMuted) {
-                            log('Аудио не заглушено, пытаемся воспроизвести');
-                            playAudio();
-                        } else {
-                            log('Аудио заглушено, автоматическое воспроизведение пропущено');
+                        try {
+                            return appState.audioContext.decodeAudioData(arrayBuffer, 
+                                // Успешное декодирование
+                                buffer => {
+                                    log(`Аудиофайл успешно декодирован: длительность ${buffer.duration.toFixed(2)} сек, ${buffer.numberOfChannels} каналов, частота ${buffer.sampleRate} Гц`);
+                                    appState.audioBuffer = buffer;
+                                    appState.audioInitialized = true;
+                                    
+                                    // Пытаемся воспроизвести
+                                    if (!appState.isMuted) {
+                                        log('Аудио не заглушено, пытаемся воспроизвести');
+                                        playAudio();
+                                    } else {
+                                        log('Аудио заглушено, автоматическое воспроизведение пропущено');
+                                    }
+                                },
+                                // Ошибка декодирования
+                                error => {
+                                    log(`Ошибка декодирования: ${error.message}`, true);
+                                    fallbackToStandardAudio();
+                                }
+                            );
+                        } catch (decodeError) {
+                            log(`Исключение при декодировании: ${decodeError.message}`, true);
+                            fallbackToStandardAudio();
+                            throw decodeError; // Перебрасываем для обработки в catch ниже
                         }
                     })
                     .catch(error => {
                         log(`Ошибка при загрузке или декодировании аудио: ${error.message}`, true);
+                        fallbackToStandardAudio();
                     });
                 
                 // Загружаем состояние звука из localStorage
@@ -638,6 +683,10 @@
                     appState.isMuted = savedMuteState === 'true';
                     log(`Загружено сохраненное состояние звука: ${appState.isMuted ? 'выключен' : 'включен'}`);
                 }
+                
+                // Включаем индикатор загрузки на кнопке звука
+                elements.soundControl.classList.add('loading');
+                elements.soundControl.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
                 
                 // Обновляем UI звука
                 updateSoundUI();
@@ -649,6 +698,12 @@
                 // Обработчик для включения аудио после взаимодействия с пользователем
                 const handleUserInteraction = function() {
                     log('Обнаружено взаимодействие пользователя');
+                    appState.wasInteraction = true;
+                    
+                    if (!appState.useWebAudio) {
+                        log('Используется стандартный Audio, пропускаем обработку взаимодействия для Web Audio API');
+                        return;
+                    }
                     
                     if (appState.audioContext) {
                         log(`Текущее состояние AudioContext: ${appState.audioContext.state}`);
@@ -657,7 +712,7 @@
                             log('Пытаемся возобновить AudioContext');
                             
                             appState.audioContext.resume().then(() => {
-                                log('AudioContext успешно возобновлен после взаимодействия с пользователем');
+                                log('AudioContext успешно возобновлен после взаимодействия с пользователя');
                                 
                                 if (!appState.isMuted && appState.audioInitialized) {
                                     log('Звук включен и аудио инициализировано, запускаем воспроизведение');
@@ -667,9 +722,20 @@
                                 }
                             }).catch(err => {
                                 log(`Ошибка при возобновлении AudioContext: ${err.message}`, true);
+                                appState.audioPlayAttempts++;
+                                
+                                if (appState.audioPlayAttempts >= 3) {
+                                    log('Превышено количество попыток воспроизведения через Web Audio API, переключаемся на стандартный Audio', true);
+                                    fallbackToStandardAudio();
+                                }
                             });
                         } else {
                             log(`AudioContext уже в состоянии: ${appState.audioContext.state}, возобновление не требуется`);
+                            
+                            if (!appState.isMuted && appState.audioInitialized && !isAudioPlaying()) {
+                                log('Звук должен играть, но не играет. Пробуем еще раз.');
+                                playAudio();
+                            }
                         }
                     } else {
                         log('AudioContext не создан, невозможно возобновить воспроизведение', true);
@@ -683,12 +749,89 @@
                 
             } catch (error) {
                 log(`Ошибка инициализации аудио: ${error.message}`, true);
+                fallbackToStandardAudio();
             }
         }
         
-        // Воспроизведение аудио
+        // Инициализация запасного варианта воспроизведения
+        function initFallbackAudio() {
+            log('Инициализация запасного варианта воспроизведения аудио');
+            
+            try {
+                if (!elements.fallbackAudio) {
+                    log('Элемент fallbackAudio не найден', true);
+                    return;
+                }
+                
+                // Настраиваем элемент аудио
+                elements.fallbackAudio.volume = 0.5;
+                elements.fallbackAudio.muted = appState.isMuted;
+                
+                // Обработчик ошибок
+                elements.fallbackAudio.onerror = function(e) {
+                    log(`Ошибка запасного аудио: ${e.type}`, true);
+                };
+                
+                // Обработчик загрузки
+                elements.fallbackAudio.onloadeddata = function() {
+                    log('Запасное аудио успешно загружено');
+                    appState.audioInitialized = true;
+                    
+                    if (!appState.isMuted) {
+                        log('Звук включен, пытаемся воспроизвести через запасной вариант');
+                        playFallbackAudio();
+                    }
+                };
+                
+                // Обработчик старта воспроизведения
+                elements.fallbackAudio.onplaying = function() {
+                    log('Запасное аудио начало воспроизводиться');
+                    updateSoundUI();
+                };
+                
+                log('Запасной вариант аудио настроен');
+            } catch (error) {
+                log(`Ошибка инициализации запасного аудио: ${error.message}`, true);
+            }
+        }
+        
+        // Переключение на стандартный Audio элемент
+        function fallbackToStandardAudio() {
+            log('Переключение на стандартный Audio элемент');
+            
+            if (!appState.useWebAudio) {
+                log('Уже используем стандартный Audio, пропускаем переключение');
+                return;
+            }
+            
+            appState.useWebAudio = false;
+            
+            // Очищаем ресурсы Web Audio API
+            stopAudio();
+            appState.audioInitialized = false;
+            
+            // Инициализируем стандартный Audio
+            initFallbackAudio();
+        }
+        
+        // Функция для проверки, воспроизводится ли звук
+        function isAudioPlaying() {
+            if (appState.useWebAudio) {
+                return appState.audioSource !== null;
+            } else {
+                return elements.fallbackAudio && !elements.fallbackAudio.paused;
+            }
+        }
+        
+        // Воспроизведение аудио через Web Audio API
         function playAudio() {
             log('Вызвана функция playAudio()');
+            
+            if (!appState.useWebAudio) {
+                log('Web Audio API отключен, используем запасной вариант');
+                playFallbackAudio();
+                return;
+            }
             
             if (appState.isMuted) {
                 log('Не могу воспроизвести аудио: звук выключен');
@@ -714,6 +857,12 @@
                         actuallyPlayAudio();
                     }).catch(error => {
                         log(`Ошибка при возобновлении AudioContext: ${error.message}`, true);
+                        appState.audioPlayAttempts++;
+                        
+                        if (appState.audioPlayAttempts >= 3) {
+                            log('Превышено количество попыток воспроизведения через Web Audio API, переключаемся на стандартный Audio', true);
+                            fallbackToStandardAudio();
+                        }
                     });
                 } else {
                     log(`AudioContext в состоянии ${appState.audioContext.state}, продолжаем воспроизведение`);
@@ -721,6 +870,7 @@
                 }
             } catch (error) {
                 log(`Ошибка воспроизведения аудио: ${error.message}`, true);
+                fallbackToStandardAudio();
             }
             
             function actuallyPlayAudio() {
@@ -750,9 +900,14 @@
                     appState.audioSource.start(0);
                     log('Воспроизведение аудио запущено успешно');
                     
+                    // Визуальное обновление кнопки звука
+                    updateSoundUI();
+                    
                     // Обработчик окончания воспроизведения
                     appState.audioSource.onended = function(event) {
                         log(`Воспроизведение аудио завершено, причина: ${event ? event.type : 'неизвестно'}`);
+                        appState.audioSource = null;
+                        
                         if (!appState.isMuted) {
                             log('Звук включен, перезапускаем воспроизведение');
                             playAudio();
@@ -760,7 +915,49 @@
                     };
                 } catch (error) {
                     log(`Ошибка при попытке воспроизведения: ${error.message}`, true);
+                    appState.audioPlayAttempts++;
+                    
+                    if (appState.audioPlayAttempts >= 3) {
+                        log('Превышено количество попыток воспроизведения через Web Audio API, переключаемся на стандартный Audio', true);
+                        fallbackToStandardAudio();
+                    }
                 }
+            }
+        }
+        
+        // Воспроизведение через стандартный Audio элемент
+        function playFallbackAudio() {
+            log('Вызвана функция playFallbackAudio()');
+            
+            if (!elements.fallbackAudio) {
+                log('Элемент fallbackAudio не найден', true);
+                return;
+            }
+            
+            if (appState.isMuted) {
+                log('Не могу воспроизвести аудио: звук выключен');
+                return;
+            }
+            
+            try {
+                elements.fallbackAudio.muted = false;
+                elements.fallbackAudio.currentTime = 0;
+                
+                log('Пытаемся воспроизвести через запасной вариант');
+                const promise = elements.fallbackAudio.play();
+                
+                if (promise !== undefined) {
+                    promise.then(() => {
+                        log('Запасное аудио успешно запущено');
+                        updateSoundUI();
+                    }).catch(error => {
+                        log(`Ошибка при воспроизведении запасного аудио: ${error.message}`, true);
+                        // Если даже запасной вариант не работает, просто уведомляем пользователя
+                        showNotification('Не удалось воспроизвести звук. Возможно, ваше устройство не поддерживает автоматическое воспроизведение.');
+                    });
+                }
+            } catch (error) {
+                log(`Исключение при воспроизведении запасного аудио: ${error.message}`, true);
             }
         }
         
@@ -768,31 +965,74 @@
         function stopAudio() {
             log('Вызвана функция stopAudio()');
             
-            if (appState.audioSource) {
-                try {
-                    log('Останавливаем аудиоисточник');
-                    appState.audioSource.stop();
-                    appState.audioSource = null;
-                    log('Воспроизведение аудио остановлено');
-                } catch (error) {
-                    log(`Ошибка при остановке аудио: ${error.message}`, true);
+            if (appState.useWebAudio) {
+                // Останавливаем Web Audio API
+                if (appState.audioSource) {
+                    try {
+                        log('Останавливаем аудиоисточник Web Audio API');
+                        appState.audioSource.stop();
+                        appState.audioSource = null;
+                        log('Воспроизведение аудио остановлено');
+                    } catch (error) {
+                        log(`Ошибка при остановке аудио: ${error.message}`, true);
+                    }
+                } else {
+                    log('Нет активного аудиоисточника Web Audio API для остановки');
                 }
             } else {
-                log('Нет активного аудиоисточника для остановки');
+                // Останавливаем стандартный Audio
+                if (elements.fallbackAudio) {
+                    try {
+                        log('Останавливаем запасной аудиоэлемент');
+                        elements.fallbackAudio.pause();
+                        log('Запасное аудио остановлено');
+                    } catch (error) {
+                        log(`Ошибка при остановке запасного аудио: ${error.message}`, true);
+                    }
+                }
             }
         }
         
         // Обновление UI звука
         function updateSoundUI() {
+            elements.soundControl.classList.remove('loading');
+            
             if (appState.isMuted) {
+                log('Обновление UI: звук выключен');
                 elements.soundControl.classList.add('muted');
+                elements.soundControl.classList.remove('playing');
                 elements.soundControl.innerHTML = '<i class="fas fa-volume-mute"></i>';
                 stopAudio();
+                
+                // Также глушим запасной аудиоэлемент
+                if (elements.fallbackAudio) {
+                    elements.fallbackAudio.muted = true;
+                    elements.fallbackAudio.pause();
+                }
             } else {
+                log('Обновление UI: звук включен');
                 elements.soundControl.classList.remove('muted');
-                elements.soundControl.innerHTML = '<i class="fas fa-volume-up"></i>';
-                if (appState.audioInitialized && appState.audioBuffer) {
-                    playAudio();
+                
+                // Проверяем реальное состояние воспроизведения
+                const isPlaying = isAudioPlaying();
+                log(`Текущее состояние воспроизведения: ${isPlaying ? 'играет' : 'не играет'}`);
+                
+                if (isPlaying) {
+                    elements.soundControl.classList.add('playing');
+                    elements.soundControl.innerHTML = '<i class="fas fa-volume-up"></i>';
+                } else {
+                    elements.soundControl.classList.remove('playing');
+                    elements.soundControl.innerHTML = '<i class="fas fa-volume"></i>';
+                    
+                    // Если звук включен, но не играет, пытаемся запустить
+                    if (appState.wasInteraction && appState.audioInitialized) {
+                        log('Звук должен играть, но не играет. Пробуем воспроизвести.');
+                        if (appState.useWebAudio) {
+                            playAudio();
+                        } else {
+                            playFallbackAudio();
+                        }
+                    }
                 }
             }
         }
@@ -811,22 +1051,47 @@
             
             log(`Новое состояние звука: ${appState.isMuted ? 'выключен' : 'включен'}`);
             
-            // Если аудиоконтекст в состоянии suspended, возобновляем его
-            if (appState.audioContext && appState.audioContext.state === 'suspended') {
-                log('Возобновляем приостановленный AudioContext');
-                appState.audioContext.resume().then(() => {
-                    log('AudioContext успешно возобновлен');
-                    updateSoundUI();
-                }).catch(error => {
-                    log(`Ошибка при возобновлении AudioContext: ${error.message}`, true);
-                    updateSoundUI();
-                });
+            // Показываем индикатор загрузки
+            elements.soundControl.classList.add('loading');
+            elements.soundControl.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            
+            if (appState.useWebAudio && appState.audioContext) {
+                // Если аудиоконтекст в состоянии suspended, возобновляем его
+                if (appState.audioContext.state === 'suspended') {
+                    log('Возобновляем приостановленный AudioContext');
+                    appState.audioContext.resume().then(() => {
+                        log('AudioContext успешно возобновлен');
+                        finishToggle();
+                    }).catch(error => {
+                        log(`Ошибка при возобновлении AudioContext: ${error.message}`, true);
+                        finishToggle();
+                    });
+                } else {
+                    finishToggle();
+                }
             } else {
-                updateSoundUI();
+                finishToggle();
             }
             
-            // Показываем уведомление
-            showNotification(appState.isMuted ? 'Звук выключен' : 'Звук включен');
+            function finishToggle() {
+                // Обновляем UI
+                updateSoundUI();
+                
+                // Воспроизводим или останавливаем в зависимости от состояния
+                if (!appState.isMuted) {
+                    log('Звук включен, пытаемся воспроизвести');
+                    if (appState.useWebAudio) {
+                        playAudio();
+                    } else {
+                        playFallbackAudio();
+                    }
+                    showNotification('Звук включен');
+                } else {
+                    log('Звук выключен, останавливаем воспроизведение');
+                    stopAudio();
+                    showNotification('Звук выключен');
+                }
+            }
         }
         
         // Загрузка данных пользователя
