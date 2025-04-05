@@ -393,7 +393,7 @@
         <i class="fas fa-volume-mute"></i>
     </div>
     
-    <audio id="backgroundMusic" preload="auto">
+    <audio id="backgroundMusic" preload="auto" loop>
         <source src="/static/Waterflame_FieldofMemories.mp3" type="audio/mpeg">
     </audio>
     
@@ -527,6 +527,8 @@
         
         // Инициализация музыки
         function initMusic() {
+            console.log('Initializing music...');
+            
             // Устанавливаем начальную громкость
             elements.backgroundMusic.volume = 0.5;
             
@@ -534,9 +536,11 @@
             const savedMuteState = localStorage.getItem('isMuted');
             if (savedMuteState !== null) {
                 appState.isMuted = savedMuteState === 'true';
+                console.log('Loaded mute state from localStorage:', appState.isMuted);
             } else {
                 // По умолчанию звук включен
                 appState.isMuted = false;
+                console.log('Using default mute state:', appState.isMuted);
             }
             
             // Обновляем UI звука
@@ -545,6 +549,8 @@
             // Обработчик ошибок воспроизведения
             elements.backgroundMusic.addEventListener('error', (e) => {
                 console.error('Audio playback error:', e);
+                console.error('Audio error code:', elements.backgroundMusic.error.code);
+                console.error('Audio error message:', elements.backgroundMusic.error.message);
                 appState.isMuted = true;
                 localStorage.setItem('isMuted', 'true');
                 updateSoundUI();
@@ -554,12 +560,18 @@
             // Добавляем обработчик загрузки аудио
             elements.backgroundMusic.addEventListener('loadeddata', () => {
                 console.log('Audio loaded successfully');
+                console.log('Audio duration:', elements.backgroundMusic.duration);
+                console.log('Audio ready state:', elements.backgroundMusic.readyState);
+                
                 if (!appState.isMuted) {
+                    console.log('Attempting to play audio...');
                     const playPromise = elements.backgroundMusic.play();
                     if (playPromise !== undefined) {
-                        playPromise.catch(error => {
+                        playPromise.then(() => {
+                            console.log('Audio started playing successfully');
+                        }).catch(error => {
                             console.log('Autoplay prevented:', error);
-                            // Если автовоспроизведение заблокировано, ждем первого взаимодействия
+                            console.log('Waiting for user interaction...');
                             document.addEventListener('click', handleFirstInteraction, { once: true });
                         });
                     }
@@ -568,26 +580,45 @@
 
             // Добавляем обработчик для Telegram WebApp
             if (window.Telegram && window.Telegram.WebApp) {
+                console.log('Telegram WebApp detected');
                 window.Telegram.WebApp.onEvent('viewportChanged', () => {
+                    console.log('Viewport changed, attempting to play audio...');
                     if (!appState.isMuted && elements.backgroundMusic.paused) {
                         const playPromise = elements.backgroundMusic.play();
                         if (playPromise !== undefined) {
-                            playPromise.catch(error => {
+                            playPromise.then(() => {
+                                console.log('Audio started after viewport change');
+                            }).catch(error => {
                                 console.log('Playback after viewport change failed:', error);
                             });
                         }
                     }
                 });
             }
+
+            // Добавляем обработчик для проверки состояния аудио
+            elements.backgroundMusic.addEventListener('playing', () => {
+                console.log('Audio is now playing');
+            });
+
+            elements.backgroundMusic.addEventListener('pause', () => {
+                console.log('Audio is now paused');
+            });
+
+            elements.backgroundMusic.addEventListener('ended', () => {
+                console.log('Audio has ended');
+            });
         }
         
         // Обработчик первого взаимодействия
         function handleFirstInteraction() {
+            console.log('First interaction detected');
             if (!appState.wasInteraction) {
                 appState.wasInteraction = true;
                 
                 // Если звук не отключен, пытаемся воспроизвести
                 if (!appState.isMuted) {
+                    console.log('Attempting to play audio after interaction...');
                     elements.backgroundMusic.muted = false;
                     const playPromise = elements.backgroundMusic.play();
                     
@@ -605,17 +636,22 @@
         
         // Переключение звука
         function toggleSound() {
+            console.log('Toggling sound, current state:', appState.isMuted);
             appState.isMuted = !appState.isMuted;
             localStorage.setItem('isMuted', appState.isMuted.toString());
             
             if (appState.isMuted) {
+                console.log('Muting audio...');
                 elements.backgroundMusic.pause();
             } else {
+                console.log('Unmuting audio...');
                 elements.backgroundMusic.muted = false;
                 const playPromise = elements.backgroundMusic.play();
                 
                 if (playPromise !== undefined) {
-                    playPromise.catch(error => {
+                    playPromise.then(() => {
+                        console.log('Audio started after unmute');
+                    }).catch(error => {
                         console.error('Audio playback failed:', error);
                         appState.isMuted = true;
                         localStorage.setItem('isMuted', 'true');
