@@ -393,7 +393,7 @@
         <i class="fas fa-volume-mute"></i>
     </div>
     
-    <audio id="backgroundMusic" loop preload="auto" muted>
+    <audio id="backgroundMusic" preload="auto">
         <source src="/static/Waterflame_FieldofMemories.mp3" type="audio/mpeg">
     </audio>
     
@@ -551,16 +551,33 @@
                 showNotification('Ошибка воспроизведения звука');
             });
 
-            // Пытаемся запустить музыку сразу
-            if (!appState.isMuted) {
-                const playPromise = elements.backgroundMusic.play();
-                if (playPromise !== undefined) {
-                    playPromise.catch(error => {
-                        console.log('Autoplay prevented:', error);
-                        // Если автовоспроизведение заблокировано, ждем первого взаимодействия
-                        document.addEventListener('click', handleFirstInteraction, { once: true });
-                    });
+            // Добавляем обработчик загрузки аудио
+            elements.backgroundMusic.addEventListener('loadeddata', () => {
+                console.log('Audio loaded successfully');
+                if (!appState.isMuted) {
+                    const playPromise = elements.backgroundMusic.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(error => {
+                            console.log('Autoplay prevented:', error);
+                            // Если автовоспроизведение заблокировано, ждем первого взаимодействия
+                            document.addEventListener('click', handleFirstInteraction, { once: true });
+                        });
+                    }
                 }
+            });
+
+            // Добавляем обработчик для Telegram WebApp
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.onEvent('viewportChanged', () => {
+                    if (!appState.isMuted && elements.backgroundMusic.paused) {
+                        const playPromise = elements.backgroundMusic.play();
+                        if (playPromise !== undefined) {
+                            playPromise.catch(error => {
+                                console.log('Playback after viewport change failed:', error);
+                            });
+                        }
+                    }
+                });
             }
         }
         
