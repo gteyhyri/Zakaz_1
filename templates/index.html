@@ -393,7 +393,7 @@
         <i class="fas fa-volume-mute"></i>
     </div>
     
-    <audio id="backgroundMusic" loop preload="auto">
+    <audio id="backgroundMusic" loop preload="auto" muted>
         <source src="/static/Waterflame_FieldofMemories.mp3" type="audio/mpeg">
     </audio>
     
@@ -534,6 +534,9 @@
             const savedMuteState = localStorage.getItem('isMuted');
             if (savedMuteState !== null) {
                 appState.isMuted = savedMuteState === 'true';
+            } else {
+                // По умолчанию звук включен, но начинаем с muted
+                appState.isMuted = true;
             }
             
             // Обновляем UI звука
@@ -548,23 +551,30 @@
                 showNotification('Ошибка воспроизведения звука');
             });
             
-            // Обработчик изменения громкости
-            elements.backgroundMusic.addEventListener('volumechange', () => {
-                if (elements.backgroundMusic.volume === 0) {
-                    appState.isMuted = true;
-                }
-                updateSoundUI();
-            });
+            // Пытаемся запустить музыку после первого взаимодействия
+            document.addEventListener('click', handleFirstInteraction, { once: true });
         }
         
-        // Обновление UI звука
-        function updateSoundUI() {
-            if (appState.isMuted) {
-                elements.soundControl.classList.add('muted');
-                elements.soundControl.innerHTML = '<i class="fas fa-volume-mute"></i>';
-            } else {
-                elements.soundControl.classList.remove('muted');
-                elements.soundControl.innerHTML = '<i class="fas fa-volume-up"></i>';
+        // Обработчик первого взаимодействия
+        function handleFirstInteraction() {
+            if (!appState.wasInteraction) {
+                appState.wasInteraction = true;
+                
+                // Если звук не отключен, пытаемся воспроизвести
+                if (!appState.isMuted) {
+                    elements.backgroundMusic.muted = false;
+                    const playPromise = elements.backgroundMusic.play();
+                    
+                    if (playPromise !== undefined) {
+                        playPromise.then(() => {
+                            console.log('Audio started after user interaction');
+                        }).catch(error => {
+                            console.error('Audio playback after interaction failed:', error);
+                            // Если не удалось, предлагаем пользователю включить звук
+                            showNotification('Нажмите на значок звука, чтобы включить');
+                        });
+                    }
+                }
             }
         }
         
@@ -576,38 +586,30 @@
             if (appState.isMuted) {
                 elements.backgroundMusic.pause();
             } else {
-                // Пытаемся воспроизвести только после взаимодействия пользователя
-                if (appState.wasInteraction) {
-                    elements.backgroundMusic.play()
-                        .then(() => {
-                            updateSoundUI();
-                        })
-                        .catch(error => {
-                            console.error('Audio playback failed:', error);
-                            appState.isMuted = true;
-                            localStorage.setItem('isMuted', 'true');
-                            updateSoundUI();
-                            showNotification('Не удалось включить звук');
-                        });
+                elements.backgroundMusic.muted = false;
+                const playPromise = elements.backgroundMusic.play();
+                
+                if (playPromise !== undefined) {
+                    playPromise.catch(error => {
+                        console.error('Audio playback failed:', error);
+                        appState.isMuted = true;
+                        localStorage.setItem('isMuted', 'true');
+                        updateSoundUI();
+                        showNotification('Не удалось включить звук');
+                    });
                 }
             }
             updateSoundUI();
         }
         
-        // Обработчик первого взаимодействия
-        function handleFirstInteraction() {
-            if (!appState.wasInteraction) {
-                appState.wasInteraction = true;
-                // Если звук не отключен, пытаемся воспроизвести
-                if (!appState.isMuted) {
-                    elements.backgroundMusic.play()
-                        .then(() => {
-                            console.log('Audio started after user interaction');
-                        })
-                        .catch(error => {
-                            console.error('Audio playback after interaction failed:', error);
-                        });
-                }
+        // Обновление UI звука
+        function updateSoundUI() {
+            if (appState.isMuted) {
+                elements.soundControl.classList.add('muted');
+                elements.soundControl.innerHTML = '<i class="fas fa-volume-mute"></i>';
+            } else {
+                elements.soundControl.classList.remove('muted');
+                elements.soundControl.innerHTML = '<i class="fas fa-volume-up"></i>';
             }
         }
         
@@ -796,9 +798,6 @@
                 elements.tasksBtn.addEventListener('click', () => switchPage('tasksPage'));
                 elements.profileBtn.addEventListener('click', () => switchPage('profilePage'));
                 elements.friendsBtn.addEventListener('click', () => switchPage('friendsPage'));
-                
-                // Глобальный обработчик взаимодействия
-                document.addEventListener('click', handleFirstInteraction, { once: true });
                 
             } catch (error) {
                 console.error('Initialization error:', error);
