@@ -5,6 +5,7 @@ from psycopg2.extras import DictCursor
 import logging
 from logging.handlers import RotatingFileHandler
 from flask_cors import CORS
+from datetime import datetime, timedelta
 
 app = Flask(__name__, static_folder='static')
 CORS(app)
@@ -37,6 +38,7 @@ def init_db():
         conn = get_db_connection()
         cur = conn.cursor()
         
+        # Основная таблица пользователей
         cur.execute("""
         CREATE TABLE IF NOT EXISTS users (
             user_id BIGINT PRIMARY KEY,
@@ -46,12 +48,34 @@ def init_db():
             max_clicks INTEGER DEFAULT 100,
             regen_rate NUMERIC DEFAULT 1,
             last_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            last_claim_time TIMESTAMP,
+            username VARCHAR(255)
         )
         """)
         
+        # Индекс для быстрого поиска пользователей
         cur.execute("""
         CREATE INDEX IF NOT EXISTS idx_users_user_id ON users(user_id)
+        """)
+        
+        # Таблица для учета рефералов
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS referrals (
+            id SERIAL PRIMARY KEY,
+            referrer_id BIGINT NOT NULL,
+            referred_id BIGINT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            earnings INTEGER DEFAULT 0,
+            UNIQUE(referrer_id, referred_id),
+            FOREIGN KEY (referrer_id) REFERENCES users(user_id),
+            FOREIGN KEY (referred_id) REFERENCES users(user_id)
+        )
+        """)
+        
+        # Индекс для быстрого поиска рефералов по реферреру
+        cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_referrals_referrer ON referrals(referrer_id)
         """)
         
         conn.commit()
@@ -74,6 +98,7 @@ def get_user():
     try:
         data = request.get_json()
         user_id = data.get('userId')
+        username = data.get('username', 'user')
         
         if not user_id:
             app.logger.error("No user ID provided")
@@ -84,21 +109,32 @@ def get_user():
                 cur.execute("SELECT CURRENT_TIMESTAMP AS now")
                 server_now = cur.fetchone()['now']
                 
+                # Обновляем/создаем пользователя и сохраняем имя пользователя
                 cur.execute("""
-                INSERT INTO users (user_id, last_update)
-                VALUES (%s, %s)
+                INSERT INTO users (user_id, last_update, username)
+                VALUES (%s, %s, %s)
                 ON CONFLICT (user_id) DO UPDATE
                 SET 
                     available_clicks = LEAST(
                         users.max_clicks,
                         users.available_clicks + EXTRACT(EPOCH FROM (%s - users.last_update)) * 0.1 * users.regen_rate
                     ),
-                    last_update = %s
+                    last_update = %s,
+                    username = COALESCE(EXCLUDED.username, users.username)
                 RETURNING *
-                """, (user_id, server_now, server_now, server_now))
+                """, (user_id, server_now, username, server_now, server_now))
                 
                 user_data = cur.fetchone()
                 conn.commit()
+                
+                # Обновляем заработок для всех рефереров, если пользователь что-то заработал
+                if user_data['total_clicks'] > 0:
+                    cur.execute("""
+                    UPDATE referrals
+                    SET earnings = %s * 0.1  -- 10% от заработка реферала
+                    WHERE referred_id = %s
+                    """, (user_data['total_clicks'], user_id))
+                    conn.commit()
                 
                 return jsonify({
                     'totalClicks': user_data['total_clicks'],
@@ -143,6 +179,14 @@ def handle_click():
                 
                 if not result or float(result['available_clicks']) < 0:
                     return jsonify({'error': 'No clicks available'}), 400
+                
+                # Обновляем заработок для всех рефереров
+                cur.execute("""
+                UPDATE referrals
+                SET earnings = %s * 0.1  -- 10% от заработка реферала
+                WHERE referred_id = %s
+                """, (result['total_clicks'], user_id))
+                conn.commit()
                 
                 return jsonify({
                     'totalClicks': result['total_clicks'],
@@ -210,6 +254,209 @@ def handle_upgrade():
                 
     except Exception as e:
         app.logger.error(f"Error in handle_upgrade: {str(e)}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/api/user/referrals', methods=['POST'])
+def get_referrals():
+    try:
+        data = request.get_json()
+        user_id = data.get('userId')
+        
+        if not user_id:
+            return jsonify({'error': 'User ID is required'}), 400
+        
+        with get_db_connection() as conn:
+            with conn.cursor(cursor_factory=DictCursor) as cur:
+                # Получаем количество рефералов пользователя
+                cur.execute("""
+                SELECT COUNT(*) as referral_count 
+                FROM referrals 
+                WHERE referrer_id = %s
+                """, (user_id,))
+                
+                result = cur.fetchone()
+                referral_count = result['referral_count'] if result else 0
+                
+                # Получаем список рефералов с именами и заработком
+                cur.execute("""
+                SELECT r.referred_id, r.earnings, u.username
+                FROM referrals r
+                JOIN users u ON r.referred_id = u.user_id
+                WHERE r.referrer_id = %s
+                ORDER BY r.earnings DESC, r.created_at DESC
+                """, (user_id,))
+                
+                referrals_data = cur.fetchall()
+                referrals = []
+                
+                total_earnings = 0
+                for ref in referrals_data:
+                    referrals.append({
+                        'id': ref['referred_id'],
+                        'username': ref['username'] or 'user',
+                        'earnings': ref['earnings'] or 0
+                    })
+                    total_earnings += ref['earnings'] or 0
+                
+                # Получаем время последнего сбора дохода
+                cur.execute("""
+                SELECT last_claim_time
+                FROM users
+                WHERE user_id = %s
+                """, (user_id,))
+                
+                user_data = cur.fetchone()
+                last_claim_time = user_data['last_claim_time'] if user_data and user_data['last_claim_time'] else None
+                
+                return jsonify({
+                    'referralCount': referral_count,
+                    'referrals': referrals,
+                    'claimableAmount': int(total_earnings),
+                    'lastClaimTime': last_claim_time.isoformat() if last_claim_time else None
+                })
+                
+    except Exception as e:
+        app.logger.error(f"Error in get_referrals: {str(e)}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/api/user/claim-referrals', methods=['POST'])
+def claim_referrals():
+    try:
+        data = request.get_json()
+        user_id = data.get('userId')
+        
+        if not user_id:
+            return jsonify({'error': 'User ID is required'}), 400
+        
+        with get_db_connection() as conn:
+            with conn.cursor(cursor_factory=DictCursor) as cur:
+                # Получаем время последнего сбора
+                cur.execute("""
+                SELECT last_claim_time
+                FROM users
+                WHERE user_id = %s
+                """, (user_id,))
+                
+                user_data = cur.fetchone()
+                
+                if user_data and user_data['last_claim_time']:
+                    # Проверяем, прошло ли 8 часов с последнего сбора
+                    last_claim = user_data['last_claim_time']
+                    min_next_claim = last_claim + timedelta(hours=8)
+                    
+                    if datetime.now() < min_next_claim:
+                        return jsonify({
+                            'error': 'You can claim earnings only once every 8 hours',
+                            'nextClaimTime': min_next_claim.isoformat()
+                        }), 400
+                
+                # Подсчитываем сумму для сбора
+                cur.execute("""
+                SELECT SUM(earnings) as total_earnings
+                FROM referrals 
+                WHERE referrer_id = %s
+                """, (user_id,))
+                
+                earnings_data = cur.fetchone()
+                claimable_amount = int(earnings_data['total_earnings']) if earnings_data and earnings_data['total_earnings'] else 0
+                
+                if claimable_amount <= 0:
+                    return jsonify({'error': 'No earnings to claim'}), 400
+                
+                # Обновляем баланс пользователя и сбрасываем заработок рефералов
+                cur.execute("""
+                UPDATE users
+                SET 
+                    total_clicks = total_clicks + %s,
+                    last_claim_time = CURRENT_TIMESTAMP
+                WHERE user_id = %s
+                RETURNING total_clicks
+                """, (claimable_amount, user_id))
+                
+                updated_user = cur.fetchone()
+                
+                # Обнуляем заработок рефералов до следующего сбора
+                cur.execute("""
+                UPDATE referrals
+                SET earnings = 0
+                WHERE referrer_id = %s
+                """, (user_id,))
+                
+                conn.commit()
+                
+                return jsonify({
+                    'success': True,
+                    'claimedAmount': claimable_amount,
+                    'newBalance': updated_user['total_clicks']
+                })
+                
+    except Exception as e:
+        app.logger.error(f"Error in claim_referrals: {str(e)}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/api/user/referral-register', methods=['POST'])
+def register_referral():
+    try:
+        data = request.get_json()
+        user_id = data.get('userId')
+        referrer_id = data.get('referrerId')
+        
+        if not user_id or not referrer_id:
+            return jsonify({'error': 'User ID and Referrer ID are required'}), 400
+        
+        # Проверяем, что пользователь не пытается стать своим собственным рефералом
+        if user_id == referrer_id:
+            return jsonify({'error': 'Cannot refer yourself'}), 400
+        
+        with get_db_connection() as conn:
+            with conn.cursor(cursor_factory=DictCursor) as cur:
+                # Проверяем существование реферрера
+                cur.execute("SELECT user_id FROM users WHERE user_id = %s", (referrer_id,))
+                if not cur.fetchone():
+                    return jsonify({'error': 'Referrer not found'}), 404
+                
+                # Проверяем, новый ли это пользователь (для предотвращения повторных регистраций)
+                cur.execute("SELECT created_at FROM users WHERE user_id = %s", (user_id,))
+                user_data = cur.fetchone()
+                
+                # Добавляем связь реферала, только если еще нет такой записи
+                cur.execute("""
+                INSERT INTO referrals (referrer_id, referred_id)
+                VALUES (%s, %s)
+                ON CONFLICT (referrer_id, referred_id) DO NOTHING
+                RETURNING id
+                """, (referrer_id, user_id))
+                
+                new_referral = cur.fetchone()
+                
+                # Если создана новая запись реферала, даем бонус реферреру
+                if new_referral:
+                    # Бонус 10,000 кликов реферреру
+                    cur.execute("""
+                    UPDATE users 
+                    SET total_clicks = total_clicks + 10000
+                    WHERE user_id = %s
+                    RETURNING total_clicks
+                    """, (referrer_id,))
+                    
+                    referrer_updated = cur.fetchone()
+                    
+                    conn.commit()
+                    
+                    return jsonify({
+                        'success': True,
+                        'message': 'Referral successfully registered',
+                        'referrerNewBalance': referrer_updated['total_clicks'] if referrer_updated else None
+                    })
+                else:
+                    conn.commit()
+                    return jsonify({
+                        'success': False,
+                        'message': 'Referral already exists or could not be created'
+                    })
+                
+    except Exception as e:
+        app.logger.error(f"Error in register_referral: {str(e)}")
         return jsonify({'error': 'Internal server error'}), 500
 
 @app.route('/health')
