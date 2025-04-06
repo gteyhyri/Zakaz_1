@@ -1147,97 +1147,107 @@
                 
             } catch (error) {
                 console.error('Error loading referral stats:', error);
+                // Если ошибка - устанавливаем дефолтные значения, чтобы UI не сломался
+                appState.referralCount = 0;
+                appState.referrals = [];
+                appState.claimableAmount = 0;
+                appState.lastClaimTime = null;
+                updateReferralUI();
             }
         }
         
         // Обновление UI реферальной системы
         function updateReferralUI() {
-            // Устанавливаем реферальную ссылку
-            const referralLink = generateReferralLink();
-            document.getElementById('referralLink').value = referralLink;
-            
-            // Обновляем счетчик рефералов
-            document.getElementById('referralCount').textContent = appState.referralCount;
-            
-            // Обновляем сумму для сбора
-            document.getElementById('claimableAmount').textContent = `${formatNumber(appState.claimableAmount)} $DGR`;
-            
-            // Обновляем статус кнопки Claim
-            const claimBtn = document.getElementById('claimBtn');
-            let nextClaimTime = '';
-            let canClaim = false;
-            
-            if (appState.lastClaimTime) {
-                const now = new Date();
-                const nextClaimDate = new Date(appState.lastClaimTime.getTime() + appState.claimCooldown);
+            try {
+                // Устанавливаем реферальную ссылку
+                const referralLink = generateReferralLink();
+                document.getElementById('referralLink').value = referralLink;
                 
-                if (now < nextClaimDate) {
-                    // Еще не прошло 8 часов
-                    const timeLeft = nextClaimDate - now;
-                    const hours = Math.floor(timeLeft / (60 * 60 * 1000));
-                    const minutes = Math.floor((timeLeft % (60 * 60 * 1000)) / (60 * 1000));
-                    const seconds = Math.floor((timeLeft % (60 * 1000)) / 1000);
+                // Обновляем счетчик рефералов
+                document.getElementById('referralCount').textContent = appState.referralCount;
+                
+                // Обновляем сумму для сбора
+                document.getElementById('claimableAmount').textContent = `${formatNumber(appState.claimableAmount)} $DGR`;
+                
+                // Обновляем статус кнопки Claim
+                const claimBtn = document.getElementById('claimBtn');
+                let nextClaimTime = '';
+                let canClaim = false;
+                
+                if (appState.lastClaimTime) {
+                    const now = new Date();
+                    const nextClaimDate = new Date(appState.lastClaimTime.getTime() + appState.claimCooldown);
                     
-                    nextClaimTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                    canClaim = false;
+                    if (now < nextClaimDate) {
+                        // Еще не прошло 8 часов
+                        const timeLeft = nextClaimDate - now;
+                        const hours = Math.floor(timeLeft / (60 * 60 * 1000));
+                        const minutes = Math.floor((timeLeft % (60 * 60 * 1000)) / (60 * 1000));
+                        const seconds = Math.floor((timeLeft % (60 * 1000)) / 1000);
+                        
+                        nextClaimTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                        canClaim = false;
+                    } else {
+                        // Прошло более 8 часов
+                        nextClaimTime = 'Доступно сейчас';
+                        canClaim = (appState.claimableAmount > 0);
+                    }
                 } else {
-                    // Прошло более 8 часов
+                    // Еще ни разу не собирали
                     nextClaimTime = 'Доступно сейчас';
                     canClaim = (appState.claimableAmount > 0);
                 }
-            } else {
-                // Еще ни разу не собирали
-                nextClaimTime = 'Доступно сейчас';
-                canClaim = (appState.claimableAmount > 0);
-            }
-            
-            document.getElementById('nextClaimTime').textContent = nextClaimTime;
-            claimBtn.disabled = !canClaim;
-            
-            // Обновляем список рефералов
-            const referralsList = document.getElementById('referralsList');
-            referralsList.innerHTML = '';
-            
-            if (appState.referrals.length === 0) {
-                // Нет рефералов
-                const placeholder = document.createElement('li');
-                placeholder.className = 'referral-list-placeholder';
-                placeholder.textContent = 'У вас пока нет рефералов';
-                referralsList.appendChild(placeholder);
                 
-                // Скрываем блок "И еще N рефералов"
-                document.getElementById('moreReferrals').style.display = 'none';
-            } else {
-                // Есть рефералы - показываем первые 10
-                const displayCount = Math.min(appState.referrals.length, 10);
+                document.getElementById('nextClaimTime').textContent = nextClaimTime;
+                claimBtn.disabled = !canClaim;
                 
-                for (let i = 0; i < displayCount; i++) {
-                    const referral = appState.referrals[i];
-                    const listItem = document.createElement('li');
+                // Обновляем список рефералов
+                const referralsList = document.getElementById('referralsList');
+                referralsList.innerHTML = '';
+                
+                if (!appState.referrals || appState.referrals.length === 0) {
+                    // Нет рефералов
+                    const placeholder = document.createElement('li');
+                    placeholder.className = 'referral-list-placeholder';
+                    placeholder.textContent = 'У вас пока нет рефералов';
+                    referralsList.appendChild(placeholder);
                     
-                    listItem.innerHTML = `
-                        <div class="referral-user">
-                            <div class="referral-avatar">
-                                ${referral.username.charAt(0).toUpperCase()}
-                            </div>
-                            <span class="referral-username">@${referral.username}</span>
-                        </div>
-                        <div class="referral-earnings">
-                            ${formatNumber(referral.earnings)} $DGR
-                        </div>
-                    `;
-                    
-                    referralsList.appendChild(listItem);
-                }
-                
-                // Обновляем блок "И еще N рефералов"
-                const hiddenCount = appState.referralCount - displayCount;
-                if (hiddenCount > 0) {
-                    document.getElementById('hiddenReferralsCount').textContent = hiddenCount;
-                    document.getElementById('moreReferrals').style.display = 'block';
-                } else {
+                    // Скрываем блок "И еще N рефералов"
                     document.getElementById('moreReferrals').style.display = 'none';
+                } else {
+                    // Есть рефералы - показываем первые 10
+                    const displayCount = Math.min(appState.referrals.length, 10);
+                    
+                    for (let i = 0; i < displayCount; i++) {
+                        const referral = appState.referrals[i];
+                        const listItem = document.createElement('li');
+                        
+                        listItem.innerHTML = `
+                            <div class="referral-user">
+                                <div class="referral-avatar">
+                                    ${(referral.username || 'U').charAt(0).toUpperCase()}
+                                </div>
+                                <span class="referral-username">@${referral.username || `User${referral.id % 1000}`}</span>
+                            </div>
+                            <div class="referral-earnings">
+                                ${formatNumber(referral.earnings || 0)} $DGR
+                            </div>
+                        `;
+                        
+                        referralsList.appendChild(listItem);
+                    }
+                    
+                    // Обновляем блок "И еще N рефералов"
+                    const hiddenCount = appState.referralCount - displayCount;
+                    if (hiddenCount > 0) {
+                        document.getElementById('hiddenReferralsCount').textContent = hiddenCount;
+                        document.getElementById('moreReferrals').style.display = 'block';
+                    } else {
+                        document.getElementById('moreReferrals').style.display = 'none';
+                    }
                 }
+            } catch (error) {
+                console.error('Error updating referral UI:', error);
             }
         }
         
@@ -1249,6 +1259,12 @@
             }
             
             try {
+                // Показываем индикатор загрузки 
+                const claimBtn = document.getElementById('claimBtn');
+                const originalText = claimBtn.innerHTML;
+                claimBtn.disabled = true;
+                claimBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Загрузка...';
+                
                 const response = await fetch('/api/user/claim-referrals', {
                     method: 'POST',
                     headers: {
@@ -1260,6 +1276,8 @@
                 
                 if (!response.ok) {
                     const errorData = await response.json();
+                    claimBtn.innerHTML = originalText;
+                    claimBtn.disabled = false;
                     throw new Error(errorData.error || 'Failed to claim referral earnings');
                 }
                 
@@ -1277,9 +1295,13 @@
                 // Показываем уведомление
                 showNotification(`Получено ${formatNumber(data.claimedAmount)} $DGR от рефералов!`);
                 
+                // Восстанавливаем кнопку
+                claimBtn.innerHTML = originalText;
+                claimBtn.disabled = false;
+                
             } catch (error) {
                 console.error('Error claiming referral earnings:', error);
-                showNotification('Ошибка при получении дохода');
+                showNotification(error.message || 'Ошибка при получении дохода');
             }
         }
         
