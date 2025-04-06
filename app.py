@@ -567,6 +567,60 @@ def register_referral():
         app.logger.error(f"Error in register_referral: {str(e)}")
         return jsonify({'error': 'Internal server error'}), 500
 
+@app.route('/api/ranking', methods=['POST'])
+def get_ranking():
+    try:
+        data = request.get_json()
+        user_id = data.get('userId')
+        
+        if not user_id:
+            return jsonify({'error': 'User ID is required'}), 400
+        
+        with get_db_connection() as conn:
+            with conn.cursor(cursor_factory=DictCursor) as cur:
+                # Получаем топ-20 игроков по балансу
+                cur.execute("""
+                SELECT user_id, username, total_clicks as balance
+                FROM users
+                ORDER BY total_clicks DESC
+                LIMIT 20
+                """)
+                
+                top_players = []
+                for row in cur.fetchall():
+                    top_players.append({
+                        'userId': row['user_id'],
+                        'username': row['username'] or f"User{row['user_id'] % 1000}",
+                        'balance': row['balance']
+                    })
+                
+                # Определяем ранг текущего пользователя
+                cur.execute("""
+                SELECT count(*) as total_users FROM users
+                """)
+                total_users = cur.fetchone()['total_users']
+                
+                cur.execute("""
+                SELECT count(*) as better_users
+                FROM users
+                WHERE total_clicks > (SELECT total_clicks FROM users WHERE user_id = %s)
+                """, (user_id,))
+                better_users = cur.fetchone()['better_users']
+                
+                user_rank = better_users + 1  # Ранг = количество пользователей с большим балансом + 1
+                
+                return jsonify({
+                    'topPlayers': top_players,
+                    'userRank': {
+                        'rank': user_rank,
+                        'totalUsers': total_users
+                    }
+                })
+                
+    except Exception as e:
+        app.logger.error(f"Error in get_ranking: {str(e)}")
+        return jsonify({'error': 'Internal server error'}), 500
+
 @app.route('/health')
 def health_check():
     try:
