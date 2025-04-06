@@ -92,19 +92,16 @@ def init_db():
         cur.execute("""
         CREATE TABLE IF NOT EXISTS users (
             user_id BIGINT PRIMARY KEY,
+            username VARCHAR(255) DEFAULT 'user',
             total_clicks INTEGER DEFAULT 0,
             available_clicks NUMERIC DEFAULT 100,
             click_power INTEGER DEFAULT 1,
             max_clicks INTEGER DEFAULT 100,
             regen_rate NUMERIC DEFAULT 1,
             last_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            last_claim_time TIMESTAMP NULL
         )
-        """)
-        
-        # Индекс для быстрого поиска пользователей
-        cur.execute("""
-        CREATE INDEX IF NOT EXISTS idx_users_user_id ON users(user_id)
         """)
         
         # Таблица для учета рефералов
@@ -113,6 +110,7 @@ def init_db():
             id SERIAL PRIMARY KEY,
             referrer_id BIGINT NOT NULL,
             referred_id BIGINT NOT NULL,
+            earnings INTEGER DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             UNIQUE(referrer_id, referred_id),
             FOREIGN KEY (referrer_id) REFERENCES users(user_id),
@@ -120,16 +118,8 @@ def init_db():
         )
         """)
         
-        # Индекс для быстрого поиска рефералов по реферреру
-        cur.execute("""
-        CREATE INDEX IF NOT EXISTS idx_referrals_referrer ON referrals(referrer_id)
-        """)
-        
         conn.commit()
-        app.logger.info("Database initialized")
-        
-        # После создания таблиц, обновляем схему если нужно
-        check_and_update_schema()
+        app.logger.info("Database initialized successfully")
         
     except Exception as e:
         app.logger.error(f"Error initializing database: {str(e)}")
@@ -137,8 +127,6 @@ def init_db():
     finally:
         if 'cur' in locals(): cur.close()
         if 'conn' in locals(): conn.close()
-
-init_db()
 
 @app.route('/')
 def index():
@@ -157,61 +145,40 @@ def get_user():
         
         with get_db_connection() as conn:
             with conn.cursor(cursor_factory=DictCursor) as cur:
-                cur.execute("SELECT CURRENT_TIMESTAMP AS now")
-                server_now = cur.fetchone()['now']
+                # Сначала проверяем существование пользователя
+                cur.execute("SELECT 1 FROM users WHERE user_id = %s", (user_id,))
+                user_exists = cur.fetchone()
                 
-                # Обновляем/создаем пользователя и сохраняем имя пользователя
-                try:
+                if not user_exists:
+                    # Если пользователя нет, создаем нового
                     cur.execute("""
-                    INSERT INTO users (user_id, last_update, username)
-                    VALUES (%s, %s, %s)
-                    ON CONFLICT (user_id) DO UPDATE
+                    INSERT INTO users (user_id, username, total_clicks, available_clicks, 
+                                      click_power, max_clicks, regen_rate, last_update, created_at)
+                    VALUES (%s, %s, 0, 100, 1, 100, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                    RETURNING *
+                    """, (user_id, username))
+                    user_data = cur.fetchone()
+                else:
+                    # Если пользователь существует, обновляем его данные
+                    cur.execute("""
+                    UPDATE users 
                     SET 
                         available_clicks = LEAST(
-                            users.max_clicks,
-                            users.available_clicks + EXTRACT(EPOCH FROM (%s - users.last_update)) * 0.1 * users.regen_rate
+                            max_clicks,
+                            available_clicks + EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - last_update)) * 0.1 * regen_rate
                         ),
-                        last_update = %s,
-                        username = COALESCE(EXCLUDED.username, users.username)
+                        last_update = CURRENT_TIMESTAMP,
+                        username = COALESCE(%s, username)
+                    WHERE user_id = %s
                     RETURNING *
-                    """, (user_id, server_now, username, server_now, server_now))
-                except psycopg2.Error as e:
-                    # Если возникла ошибка с колонкой username, используем запрос без неё
-                    if "column" in str(e) and "username" in str(e):
-                        app.logger.warning("Username column not found, using legacy query")
-                        cur.execute("""
-                        INSERT INTO users (user_id, last_update)
-                        VALUES (%s, %s)
-                        ON CONFLICT (user_id) DO UPDATE
-                        SET 
-                            available_clicks = LEAST(
-                                users.max_clicks,
-                                users.available_clicks + EXTRACT(EPOCH FROM (%s - users.last_update)) * 0.1 * users.regen_rate
-                            ),
-                            last_update = %s
-                        RETURNING *
-                        """, (user_id, server_now, server_now, server_now))
-                    else:
-                        raise
+                    """, (username, user_id))
+                    user_data = cur.fetchone()
                 
-                user_data = cur.fetchone()
+                if not user_data:
+                    app.logger.error("Failed to get or create user data")
+                    return jsonify({'error': 'Failed to get user data'}), 500
+                
                 conn.commit()
-                
-                # Обновляем заработок для всех рефереров, если пользователь что-то заработал
-                if user_data['total_clicks'] > 0:
-                    try:
-                        cur.execute("""
-                        UPDATE referrals
-                        SET earnings = %s * 0.1  -- 10% от заработка реферала
-                        WHERE referred_id = %s
-                        """, (user_data['total_clicks'], user_id))
-                        conn.commit()
-                    except psycopg2.Error as e:
-                        if "column" in str(e) and "earnings" in str(e):
-                            app.logger.warning("Earnings column not found, skipping referral earnings update")
-                            conn.rollback()
-                        else:
-                            raise
                 
                 return jsonify({
                     'totalClicks': user_data['total_clicks'],
@@ -236,45 +203,28 @@ def handle_click():
         
         with get_db_connection() as conn:
             with conn.cursor(cursor_factory=DictCursor) as cur:
+                # Пытаемся обновить клики пользователя
                 cur.execute("""
-                WITH updated AS (
-                    UPDATE users 
-                    SET 
-                        total_clicks = total_clicks + click_power,
-                        available_clicks = GREATEST(0, available_clicks - 1),
-                        last_update = CURRENT_TIMESTAMP
-                    WHERE user_id = %s AND available_clicks >= 1
-                    RETURNING *
-                )
-                SELECT * FROM updated
-                UNION
-                SELECT * FROM users WHERE user_id = %s AND NOT EXISTS (SELECT 1 FROM updated)
-                """, (user_id, user_id))
+                UPDATE users 
+                SET 
+                    total_clicks = total_clicks + click_power,
+                    available_clicks = GREATEST(0, available_clicks - 1),
+                    last_update = CURRENT_TIMESTAMP
+                WHERE user_id = %s AND available_clicks >= 1
+                RETURNING *
+                """, (user_id,))
                 
                 result = cur.fetchone()
                 
                 if not result:
-                    # Если пользователь не найден, это может быть ошибка в базе данных
-                    app.logger.error(f"User {user_id} not found in handle_click")
-                    return jsonify({'error': 'User not found'}), 404
-                
-                if float(result['available_clicks']) < 0:
+                    # Если не удалось обновить (нет доступных кликов)
+                    cur.execute("SELECT * FROM users WHERE user_id = %s", (user_id,))
+                    result = cur.fetchone()
+                    if not result:
+                        return jsonify({'error': 'User not found'}), 404
                     return jsonify({'error': 'No clicks available'}), 400
                 
-                # Обновляем заработок для всех рефереров
-                try:
-                    cur.execute("""
-                    UPDATE referrals
-                    SET earnings = %s * 0.1  -- 10% от заработка реферала
-                    WHERE referred_id = %s
-                    """, (result['total_clicks'], user_id))
-                    conn.commit()
-                except psycopg2.Error as e:
-                    if "column" in str(e) and "earnings" in str(e):
-                        app.logger.warning("Earnings column not found, skipping referral earnings update")
-                        # Не делаем rollback, т.к. основной апдейт прошел успешно
-                    else:
-                        raise
+                conn.commit()
                 
                 return jsonify({
                     'totalClicks': result['total_clicks'],
