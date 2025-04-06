@@ -168,10 +168,10 @@ def get_user():
                             available_clicks + EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - last_update)) * 0.1 * regen_rate
                         ),
                         last_update = CURRENT_TIMESTAMP,
-                        username = COALESCE(%s, username)
+                        username = CASE WHEN %s != 'user' AND %s IS NOT NULL THEN %s ELSE username END
                     WHERE user_id = %s
                     RETURNING *
-                    """, (username, user_id))
+                    """, (username, username, username, user_id))
                     user_data = cur.fetchone()
                 
                 if not user_data:
@@ -331,9 +331,13 @@ def get_referrals():
                     
                     referrals_data = cur.fetchall()
                     for ref in referrals_data:
+                        username = ref['username']
+                        if not username or username == 'user':
+                            username = f"User{ref['referred_id'] % 1000}"
+                            
                         referrals.append({
                             'id': ref['referred_id'],
-                            'username': ref['username'] or 'user',
+                            'username': username,
                             'earnings': ref['earnings'] or 0
                         })
                         total_earnings += ref['earnings'] or 0
@@ -572,9 +576,22 @@ def get_ranking():
     try:
         data = request.get_json()
         user_id = data.get('userId')
+        username = data.get('username')
         
         if not user_id:
             return jsonify({'error': 'User ID is required'}), 400
+        
+        # Обновляем имя пользователя, если оно передано
+        if username and username != 'user':
+            try:
+                with get_db_connection() as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("""
+                        UPDATE users SET username = %s WHERE user_id = %s
+                        """, (username, user_id))
+                        conn.commit()
+            except Exception as e:
+                app.logger.error(f"Error updating username: {str(e)}")
         
         with get_db_connection() as conn:
             with conn.cursor(cursor_factory=DictCursor) as cur:
@@ -588,9 +605,14 @@ def get_ranking():
                 
                 top_players = []
                 for row in cur.fetchall():
+                    # Если имя пользователя отсутствует или установлено в default 'user'
+                    display_username = row['username']
+                    if not display_username or display_username == 'user':
+                        display_username = f"User{row['user_id'] % 1000}"
+                    
                     top_players.append({
                         'userId': row['user_id'],
-                        'username': row['username'] or f"User{row['user_id'] % 1000}",
+                        'username': display_username,
                         'balance': row['balance']
                     })
                 
