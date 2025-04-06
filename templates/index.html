@@ -1114,7 +1114,7 @@
                     },
                     body: JSON.stringify({ 
                         userId,
-                        initData: tg.initData
+                        username: username
                     })
                 });
         
@@ -1424,12 +1424,16 @@
                         const referral = appState.referrals[i];
                         const listItem = document.createElement('li');
                         
+                        // Проверяем, есть ли нормальное имя пользователя
+                        const displayUsername = referral.username && referral.username !== 'user' ? 
+                            referral.username : `User${referral.id % 1000}`;
+                        
                         listItem.innerHTML = `
                             <div class="referral-user">
                                 <div class="referral-avatar">
-                                    ${(referral.username || 'U').charAt(0).toUpperCase()}
+                                    ${displayUsername.charAt(0).toUpperCase()}
                                 </div>
-                                <span class="referral-username">@${referral.username || `User${referral.id % 1000}`}</span>
+                                <span class="referral-username">@${displayUsername}</span>
                             </div>
                             <div class="referral-earnings">
                                 ${formatNumber(referral.earnings || 0)} $DGR
@@ -1586,7 +1590,10 @@
                         'Content-Type': 'application/json',
                         'Telegram-Init-Data': tg.initData || ''
                     },
-                    body: JSON.stringify({ userId })
+                    body: JSON.stringify({ 
+                        userId,
+                        username: username
+                    })
                 });
                 
                 if (!response.ok) {
@@ -1630,10 +1637,13 @@
                     rankClass += ' ranking-you';
                 }
                 
+                const displayUsername = player.username && player.username !== 'user' ? 
+                    player.username : `User${player.userId % 1000}`;
+                
                 rankItem.className = `ranking-item ${rankClass}`;
                 rankItem.innerHTML = `
                     <div class="ranking-rank">${index + 1}</div>
-                    <div class="ranking-username">@${player.username || 'Пользователь'}</div>
+                    <div class="ranking-username">@${displayUsername}</div>
                     <div class="ranking-balance">${formatNumber(player.balance)} $DGR</div>
                 `;
                 
