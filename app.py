@@ -33,6 +33,56 @@ def get_db_connection():
         app.logger.error(f"Database connection error: {str(e)}")
         raise
 
+def check_and_update_schema():
+    """Проверяет и обновляет схему базы данных, если необходимо."""
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        # Проверяем наличие столбца username в таблице users
+        cur.execute("""
+        SELECT EXISTS (
+            SELECT FROM information_schema.columns 
+            WHERE table_name = 'users' AND column_name = 'username'
+        )
+        """)
+        
+        if not cur.fetchone()[0]:
+            app.logger.info("Adding username column to users table")
+            cur.execute("ALTER TABLE users ADD COLUMN username VARCHAR(255)")
+        
+        # Проверяем наличие столбца last_claim_time в таблице users
+        cur.execute("""
+        SELECT EXISTS (
+            SELECT FROM information_schema.columns 
+            WHERE table_name = 'users' AND column_name = 'last_claim_time'
+        )
+        """)
+        
+        if not cur.fetchone()[0]:
+            app.logger.info("Adding last_claim_time column to users table")
+            cur.execute("ALTER TABLE users ADD COLUMN last_claim_time TIMESTAMP")
+        
+        # Проверяем наличие столбца earnings в таблице referrals
+        cur.execute("""
+        SELECT EXISTS (
+            SELECT FROM information_schema.columns 
+            WHERE table_name = 'referrals' AND column_name = 'earnings'
+        )
+        """)
+        
+        if not cur.fetchone()[0]:
+            app.logger.info("Adding earnings column to referrals table")
+            cur.execute("ALTER TABLE referrals ADD COLUMN earnings INTEGER DEFAULT 0")
+        
+        conn.commit()
+        app.logger.info("Database schema updated successfully")
+    except Exception as e:
+        app.logger.error(f"Error updating database schema: {str(e)}")
+    finally:
+        if 'cur' in locals(): cur.close()
+        if 'conn' in locals(): conn.close()
+
 def init_db():
     try:
         conn = get_db_connection()
@@ -48,9 +98,7 @@ def init_db():
             max_clicks INTEGER DEFAULT 100,
             regen_rate NUMERIC DEFAULT 1,
             last_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            last_claim_time TIMESTAMP,
-            username VARCHAR(255)
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
         """)
         
@@ -66,7 +114,6 @@ def init_db():
             referrer_id BIGINT NOT NULL,
             referred_id BIGINT NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            earnings INTEGER DEFAULT 0,
             UNIQUE(referrer_id, referred_id),
             FOREIGN KEY (referrer_id) REFERENCES users(user_id),
             FOREIGN KEY (referred_id) REFERENCES users(user_id)
@@ -80,6 +127,10 @@ def init_db():
         
         conn.commit()
         app.logger.info("Database initialized")
+        
+        # После создания таблиц, обновляем схему если нужно
+        check_and_update_schema()
+        
     except Exception as e:
         app.logger.error(f"Error initializing database: {str(e)}")
         raise
@@ -110,31 +161,57 @@ def get_user():
                 server_now = cur.fetchone()['now']
                 
                 # Обновляем/создаем пользователя и сохраняем имя пользователя
-                cur.execute("""
-                INSERT INTO users (user_id, last_update, username)
-                VALUES (%s, %s, %s)
-                ON CONFLICT (user_id) DO UPDATE
-                SET 
-                    available_clicks = LEAST(
-                        users.max_clicks,
-                        users.available_clicks + EXTRACT(EPOCH FROM (%s - users.last_update)) * 0.1 * users.regen_rate
-                    ),
-                    last_update = %s,
-                    username = COALESCE(EXCLUDED.username, users.username)
-                RETURNING *
-                """, (user_id, server_now, username, server_now, server_now))
+                try:
+                    cur.execute("""
+                    INSERT INTO users (user_id, last_update, username)
+                    VALUES (%s, %s, %s)
+                    ON CONFLICT (user_id) DO UPDATE
+                    SET 
+                        available_clicks = LEAST(
+                            users.max_clicks,
+                            users.available_clicks + EXTRACT(EPOCH FROM (%s - users.last_update)) * 0.1 * users.regen_rate
+                        ),
+                        last_update = %s,
+                        username = COALESCE(EXCLUDED.username, users.username)
+                    RETURNING *
+                    """, (user_id, server_now, username, server_now, server_now))
+                except psycopg2.Error as e:
+                    # Если возникла ошибка с колонкой username, используем запрос без неё
+                    if "column" in str(e) and "username" in str(e):
+                        app.logger.warning("Username column not found, using legacy query")
+                        cur.execute("""
+                        INSERT INTO users (user_id, last_update)
+                        VALUES (%s, %s)
+                        ON CONFLICT (user_id) DO UPDATE
+                        SET 
+                            available_clicks = LEAST(
+                                users.max_clicks,
+                                users.available_clicks + EXTRACT(EPOCH FROM (%s - users.last_update)) * 0.1 * users.regen_rate
+                            ),
+                            last_update = %s
+                        RETURNING *
+                        """, (user_id, server_now, server_now, server_now))
+                    else:
+                        raise
                 
                 user_data = cur.fetchone()
                 conn.commit()
                 
                 # Обновляем заработок для всех рефереров, если пользователь что-то заработал
                 if user_data['total_clicks'] > 0:
-                    cur.execute("""
-                    UPDATE referrals
-                    SET earnings = %s * 0.1  -- 10% от заработка реферала
-                    WHERE referred_id = %s
-                    """, (user_data['total_clicks'], user_id))
-                    conn.commit()
+                    try:
+                        cur.execute("""
+                        UPDATE referrals
+                        SET earnings = %s * 0.1  -- 10% от заработка реферала
+                        WHERE referred_id = %s
+                        """, (user_data['total_clicks'], user_id))
+                        conn.commit()
+                    except psycopg2.Error as e:
+                        if "column" in str(e) and "earnings" in str(e):
+                            app.logger.warning("Earnings column not found, skipping referral earnings update")
+                            conn.rollback()
+                        else:
+                            raise
                 
                 return jsonify({
                     'totalClicks': user_data['total_clicks'],
@@ -175,18 +252,29 @@ def handle_click():
                 """, (user_id, user_id))
                 
                 result = cur.fetchone()
-                conn.commit()
                 
-                if not result or float(result['available_clicks']) < 0:
+                if not result:
+                    # Если пользователь не найден, это может быть ошибка в базе данных
+                    app.logger.error(f"User {user_id} not found in handle_click")
+                    return jsonify({'error': 'User not found'}), 404
+                
+                if float(result['available_clicks']) < 0:
                     return jsonify({'error': 'No clicks available'}), 400
                 
                 # Обновляем заработок для всех рефереров
-                cur.execute("""
-                UPDATE referrals
-                SET earnings = %s * 0.1  -- 10% от заработка реферала
-                WHERE referred_id = %s
-                """, (result['total_clicks'], user_id))
-                conn.commit()
+                try:
+                    cur.execute("""
+                    UPDATE referrals
+                    SET earnings = %s * 0.1  -- 10% от заработка реферала
+                    WHERE referred_id = %s
+                    """, (result['total_clicks'], user_id))
+                    conn.commit()
+                except psycopg2.Error as e:
+                    if "column" in str(e) and "earnings" in str(e):
+                        app.logger.warning("Earnings column not found, skipping referral earnings update")
+                        # Не делаем rollback, т.к. основной апдейт прошел успешно
+                    else:
+                        raise
                 
                 return jsonify({
                     'totalClicks': result['total_clicks'],
@@ -277,36 +365,68 @@ def get_referrals():
                 result = cur.fetchone()
                 referral_count = result['referral_count'] if result else 0
                 
-                # Получаем список рефералов с именами и заработком
-                cur.execute("""
-                SELECT r.referred_id, r.earnings, u.username
-                FROM referrals r
-                JOIN users u ON r.referred_id = u.user_id
-                WHERE r.referrer_id = %s
-                ORDER BY r.earnings DESC, r.created_at DESC
-                """, (user_id,))
-                
-                referrals_data = cur.fetchall()
+                # Пытаемся получить список рефералов с именами и заработком
                 referrals = []
-                
                 total_earnings = 0
-                for ref in referrals_data:
-                    referrals.append({
-                        'id': ref['referred_id'],
-                        'username': ref['username'] or 'user',
-                        'earnings': ref['earnings'] or 0
-                    })
-                    total_earnings += ref['earnings'] or 0
+                
+                # Версия запроса будет зависеть от наличия столбцов
+                try:
+                    cur.execute("""
+                    SELECT r.referred_id, r.earnings, u.username
+                    FROM referrals r
+                    JOIN users u ON r.referred_id = u.user_id
+                    WHERE r.referrer_id = %s
+                    ORDER BY r.earnings DESC, r.created_at DESC
+                    """, (user_id,))
+                    
+                    referrals_data = cur.fetchall()
+                    for ref in referrals_data:
+                        referrals.append({
+                            'id': ref['referred_id'],
+                            'username': ref['username'] or 'user',
+                            'earnings': ref['earnings'] or 0
+                        })
+                        total_earnings += ref['earnings'] or 0
+                        
+                except psycopg2.Error as e:
+                    if any(col in str(e) for col in ['earnings', 'username']):
+                        app.logger.warning("Using simplified referrals query due to missing columns")
+                        
+                        # Запрос без username и earnings
+                        cur.execute("""
+                        SELECT r.referred_id, r.created_at 
+                        FROM referrals r
+                        WHERE r.referrer_id = %s
+                        ORDER BY r.created_at DESC
+                        """, (user_id,))
+                        
+                        referrals_data = cur.fetchall()
+                        for ref in referrals_data:
+                            referrals.append({
+                                'id': ref['referred_id'],
+                                'username': f"User{ref['referred_id'] % 1000}",
+                                'earnings': 0
+                            })
+                    else:
+                        raise
                 
                 # Получаем время последнего сбора дохода
-                cur.execute("""
-                SELECT last_claim_time
-                FROM users
-                WHERE user_id = %s
-                """, (user_id,))
-                
-                user_data = cur.fetchone()
-                last_claim_time = user_data['last_claim_time'] if user_data and user_data['last_claim_time'] else None
+                last_claim_time = None
+                try:
+                    cur.execute("""
+                    SELECT last_claim_time
+                    FROM users
+                    WHERE user_id = %s
+                    """, (user_id,))
+                    
+                    user_data = cur.fetchone()
+                    if user_data and 'last_claim_time' in user_data and user_data['last_claim_time']:
+                        last_claim_time = user_data['last_claim_time']
+                except psycopg2.Error as e:
+                    if "column" in str(e) and "last_claim_time" in str(e):
+                        app.logger.warning("last_claim_time column not found")
+                    else:
+                        raise
                 
                 return jsonify({
                     'referralCount': referral_count,
@@ -330,57 +450,95 @@ def claim_referrals():
         
         with get_db_connection() as conn:
             with conn.cursor(cursor_factory=DictCursor) as cur:
-                # Получаем время последнего сбора
-                cur.execute("""
-                SELECT last_claim_time
-                FROM users
-                WHERE user_id = %s
-                """, (user_id,))
-                
-                user_data = cur.fetchone()
-                
-                if user_data and user_data['last_claim_time']:
-                    # Проверяем, прошло ли 8 часов с последнего сбора
-                    last_claim = user_data['last_claim_time']
-                    min_next_claim = last_claim + timedelta(hours=8)
+                # Подсчитываем сумму для сбора, с учетом того, что столбец earnings может отсутствовать
+                try:
+                    cur.execute("""
+                    SELECT SUM(earnings) as total_earnings
+                    FROM referrals 
+                    WHERE referrer_id = %s
+                    """, (user_id,))
                     
-                    if datetime.now() < min_next_claim:
-                        return jsonify({
-                            'error': 'You can claim earnings only once every 8 hours',
-                            'nextClaimTime': min_next_claim.isoformat()
-                        }), 400
-                
-                # Подсчитываем сумму для сбора
-                cur.execute("""
-                SELECT SUM(earnings) as total_earnings
-                FROM referrals 
-                WHERE referrer_id = %s
-                """, (user_id,))
-                
-                earnings_data = cur.fetchone()
-                claimable_amount = int(earnings_data['total_earnings']) if earnings_data and earnings_data['total_earnings'] else 0
+                    earnings_data = cur.fetchone()
+                    claimable_amount = int(earnings_data['total_earnings']) if earnings_data and earnings_data['total_earnings'] else 0
+                except psycopg2.Error as e:
+                    if "column" in str(e) and "earnings" in str(e):
+                        app.logger.warning("Earnings column not found, using default claimable amount")
+                        # Если столбца earnings нет, даем фиксированную сумму за каждого реферала
+                        cur.execute("""
+                        SELECT COUNT(*) as referral_count 
+                        FROM referrals 
+                        WHERE referrer_id = %s
+                        """, (user_id,))
+                        result = cur.fetchone()
+                        claimable_amount = result['referral_count'] * 100 if result else 0
+                    else:
+                        raise
                 
                 if claimable_amount <= 0:
                     return jsonify({'error': 'No earnings to claim'}), 400
                 
+                # Проверяем, прошло ли 8 часов с последнего сбора
+                try:
+                    cur.execute("""
+                    SELECT last_claim_time
+                    FROM users
+                    WHERE user_id = %s
+                    """, (user_id,))
+                    
+                    user_data = cur.fetchone()
+                    
+                    if user_data and 'last_claim_time' in user_data and user_data['last_claim_time']:
+                        # Проверяем, прошло ли 8 часов с последнего сбора
+                        last_claim = user_data['last_claim_time']
+                        min_next_claim = last_claim + timedelta(hours=8)
+                        
+                        if datetime.now() < min_next_claim:
+                            return jsonify({
+                                'error': 'You can claim earnings only once every 8 hours',
+                                'nextClaimTime': min_next_claim.isoformat()
+                            }), 400
+                except psycopg2.Error as e:
+                    if "column" in str(e) and "last_claim_time" in str(e):
+                        app.logger.warning("last_claim_time column not found, skipping cooldown check")
+                    else:
+                        raise
+                
                 # Обновляем баланс пользователя и сбрасываем заработок рефералов
-                cur.execute("""
-                UPDATE users
-                SET 
-                    total_clicks = total_clicks + %s,
-                    last_claim_time = CURRENT_TIMESTAMP
-                WHERE user_id = %s
-                RETURNING total_clicks
-                """, (claimable_amount, user_id))
+                try:
+                    cur.execute("""
+                    UPDATE users
+                    SET 
+                        total_clicks = total_clicks + %s,
+                        last_claim_time = CURRENT_TIMESTAMP
+                    WHERE user_id = %s
+                    RETURNING total_clicks
+                    """, (claimable_amount, user_id))
+                except psycopg2.Error as e:
+                    if "column" in str(e) and "last_claim_time" in str(e):
+                        app.logger.warning("last_claim_time column not found, updating without it")
+                        cur.execute("""
+                        UPDATE users
+                        SET total_clicks = total_clicks + %s
+                        WHERE user_id = %s
+                        RETURNING total_clicks
+                        """, (claimable_amount, user_id))
+                    else:
+                        raise
                 
                 updated_user = cur.fetchone()
                 
                 # Обнуляем заработок рефералов до следующего сбора
-                cur.execute("""
-                UPDATE referrals
-                SET earnings = 0
-                WHERE referrer_id = %s
-                """, (user_id,))
+                try:
+                    cur.execute("""
+                    UPDATE referrals
+                    SET earnings = 0
+                    WHERE referrer_id = %s
+                    """, (user_id,))
+                except psycopg2.Error as e:
+                    if "column" in str(e) and "earnings" in str(e):
+                        app.logger.warning("Earnings column not found, skipping earnings reset")
+                    else:
+                        raise
                 
                 conn.commit()
                 
