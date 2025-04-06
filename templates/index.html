@@ -99,27 +99,6 @@
             color: var(--white);
         }
 
-        .sound-control.loading {
-            background-color: var(--primary-blue);
-            opacity: 0.8;
-        }
-        
-        .sound-control.playing {
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0% {
-                box-shadow: 0 0 0 0 rgba(42, 127, 255, 0.7);
-            }
-            70% {
-                box-shadow: 0 0 0 10px rgba(42, 127, 255, 0);
-            }
-            100% {
-                box-shadow: 0 0 0 0 rgba(42, 127, 255, 0);
-            }
-        }
-
         .main-content {
             flex: 1;
             display: flex;
@@ -374,6 +353,247 @@
             color: var(--primary-blue);
         }
 
+        /* Referral Page Styles */
+        .referral-container {
+            width: 100%;
+            max-width: 320px;
+            background-color: var(--white);
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .referral-title {
+            color: var(--dark-blue);
+            margin-bottom: 4px;
+            font-size: 22px;
+            font-weight: 700;
+            text-align: center;
+        }
+        
+        .referral-description {
+            color: var(--dark-gray);
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+        
+        .referral-link-container {
+            display: flex;
+            position: relative;
+            margin: 8px 0;
+        }
+        
+        .referral-link {
+            flex: 1;
+            padding: 12px 16px;
+            background-color: var(--light-blue);
+            border: 2px solid var(--primary-blue);
+            border-radius: 12px;
+            color: var(--dark-blue);
+            font-size: 14px;
+            width: 100%;
+            outline: none;
+        }
+        
+        .copy-btn {
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: var(--primary-blue);
+            color: var(--white);
+            border: none;
+            border-radius: 8px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .copy-btn:hover {
+            background-color: var(--dark-blue);
+        }
+        
+        .referral-stats {
+            display: flex;
+            align-items: center;
+            background-color: var(--light-blue);
+            padding: 16px;
+            border-radius: 12px;
+            margin: 8px 0;
+        }
+        
+        .referral-stat-icon {
+            background-color: var(--primary-blue);
+            color: var(--white);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 16px;
+            font-size: 18px;
+        }
+        
+        .referral-stat-info {
+            flex: 1;
+        }
+        
+        .referral-stat-label {
+            display: block;
+            color: var(--dark-gray);
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        
+        .referral-stat-value {
+            display: block;
+            color: var(--dark-blue);
+            font-size: 20px;
+            font-weight: 700;
+        }
+        
+        .referral-earnings {
+            background-color: var(--light-blue);
+            padding: 16px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .earnings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .earnings-title {
+            color: var(--dark-blue);
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .claim-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .claim-amount {
+            color: var(--primary-blue);
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .claim-btn {
+            background-color: var(--primary-blue);
+            color: var(--white);
+            border: none;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .claim-btn:hover {
+            background-color: var(--dark-blue);
+            transform: translateY(-2px);
+        }
+        
+        .claim-btn:disabled {
+            background-color: var(--dark-gray);
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .claim-timer {
+            color: var(--dark-gray);
+            font-size: 12px;
+            text-align: right;
+            font-style: italic;
+        }
+        
+        .referrals-list {
+            list-style: none;
+            padding: 0;
+            margin: 10px 0;
+            max-height: 200px;
+            overflow-y: auto;
+            border-top: 1px solid rgba(0,0,0,0.1);
+            padding-top: 10px;
+        }
+        
+        .referrals-list li {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        .referrals-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .referral-user {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .referral-avatar {
+            width: 24px;
+            height: 24px;
+            background-color: var(--primary-blue);
+            color: var(--white);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+        
+        .referral-username {
+            color: var(--dark-blue);
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .referral-earnings {
+            color: var(--primary-blue);
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .referral-list-placeholder {
+            color: var(--dark-gray);
+            font-style: italic;
+            text-align: center;
+            padding: 20px 0;
+        }
+        
+        .more-referrals {
+            text-align: center;
+            color: var(--dark-gray);
+            font-size: 14px;
+            padding: 8px 0;
+            border-top: 1px dashed rgba(0,0,0,0.1);
+        }
+
         @media (max-width: 480px) {
             .clicker-image {
                 width: 200px;
@@ -414,11 +634,9 @@
         <i class="fas fa-volume-mute"></i>
     </div>
     
-    <!-- Добавляем скрытый отладочный div для логов -->
-    <div id="debugLogs" style="display: none; position: fixed; bottom: 60px; left: 10px; right: 10px; max-height: 200px; overflow-y: auto; background: rgba(0,0,0,0.7); color: white; font-size: 10px; padding: 5px; z-index: 9999;"></div>
-    
-    <!-- Добавляем запасной элемент audio для совместимости -->
-    <audio id="fallbackAudio" preload="auto" loop src="/static/Waterflame_FieldofMemories.mp3" style="display:none;"></audio>
+    <audio id="backgroundMusic" loop preload="auto">
+        <source src="/static/Waterflame_FieldofMemories.mp3" type="audio/mpeg">
+    </audio>
     
     <div class="page active" id="mainPage">
         <div class="main-content">
@@ -466,8 +684,57 @@
     </div>
     
     <div class="page" id="friendsPage">
-        <div class="soon-page">
-            Скоро...
+        <div class="referral-container">
+            <h2 class="referral-title">Пригласите друзей</h2>
+            <p class="referral-description">Делитесь ссылкой с друзьями и получайте бонусы за каждого приглашенного пользователя!</p>
+            
+            <div class="referral-link-container">
+                <input type="text" readonly id="referralLink" class="referral-link" value="">
+                <button id="copyLinkBtn" class="copy-btn">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </div>
+            
+            <div class="referral-stats">
+                <div class="referral-stat-icon">
+                    <i class="fas fa-user-plus"></i>
+                </div>
+                <div class="referral-stat-info">
+                    <span class="referral-stat-label">Вы пригласили:</span>
+                    <span class="referral-stat-value" id="referralCount">0</span>
+                </div>
+            </div>
+            
+            <div class="referral-earnings">
+                <div class="earnings-header">
+                    <h3 class="earnings-title">Доход от рефералов</h3>
+                    <div class="claim-container">
+                        <span class="claim-amount" id="claimableAmount">0 $DGR</span>
+                        <button class="claim-btn" id="claimBtn">
+                            <i class="fas fa-hand-holding-usd"></i> Claim
+                        </button>
+                    </div>
+                </div>
+                <div class="claim-timer" id="claimTimer">Доступно через: <span id="nextClaimTime">00:00:00</span></div>
+                
+                <ul class="referrals-list" id="referralsList">
+                    <!-- Список будет заполнен динамически -->
+                    <li class="referral-list-placeholder">У вас пока нет рефералов</li>
+                </ul>
+                
+                <div class="more-referrals" id="moreReferrals">
+                    <span>И еще <span id="hiddenReferralsCount">0</span> рефералов</span>
+                </div>
+            </div>
+            
+            <div class="referral-benefits">
+                <h3 class="benefits-title">Преимущества приглашения:</h3>
+                <ul class="benefits-list">
+                    <li><i class="fas fa-check"></i> +10,000 $DGR за каждого приглашенного друга</li>
+                    <li><i class="fas fa-check"></i> 10% от заработка ваших рефералов</li>
+                    <li><i class="fas fa-check"></i> Возможность собирать доход каждые 8 часов</li>
+                </ul>
+            </div>
         </div>
     </div>
     
@@ -533,7 +800,7 @@
             friendsPage: document.getElementById('friendsPage'),
             // Элементы звука
             soundControl: document.getElementById('soundControl'),
-            fallbackAudio: document.getElementById('fallbackAudio')
+            backgroundMusic: document.getElementById('backgroundMusic')
         };
         
         // Состояние приложения
@@ -544,552 +811,97 @@
             maxClicks: 100,
             regenRate: 1,
             lastUpdate: Date.now(),
-            isMuted: true,
+            isMuted: true, // По умолчанию звук выключен
             wasInteraction: false,
-            audioInitialized: false,
-            audioContext: null,
-            audioBuffer: null,
-            audioSource: null,
-            useWebAudio: true,     // Флаг для переключения между Web Audio API и стандартным Audio
-            audioPlayAttempts: 0   // Счетчик попыток воспроизведения
+            referralCount: 0, // Счетчик рефералов
+            referrals: [], // Массив с данными о рефералах
+            claimableAmount: 0, // Сумма доступная для сбора
+            lastClaimTime: null, // Время последнего сбора
+            claimCooldown: 8 * 60 * 60 * 1000 // 8 часов в миллисекундах
         };
         
-        // Функция для расширенного логирования
-        function log(message, isError = false) {
-            const timestamp = new Date().toISOString().substr(11, 8);
-            const logMessage = `[${timestamp}] ${message}`;
-            
-            console[isError ? 'error' : 'log'](logMessage);
-            
-            // Также добавляем лог в скрытый div для отладки
-            const debugLogs = document.getElementById('debugLogs');
-            if (debugLogs) {
-                const logEntry = document.createElement('div');
-                logEntry.textContent = logMessage;
-                if (isError) {
-                    logEntry.style.color = '#ff5555';
-                }
-                debugLogs.appendChild(logEntry);
-                debugLogs.scrollTop = debugLogs.scrollHeight;
-                
-                // Ограничиваем количество логов
-                while (debugLogs.children.length > 100) {
-                    debugLogs.removeChild(debugLogs.firstChild);
-                }
-            }
-        }
-        
-        // Функция для включения отображения логов
-        function toggleDebugLogs() {
-            const debugLogs = document.getElementById('debugLogs');
-            if (debugLogs) {
-                debugLogs.style.display = debugLogs.style.display === 'none' ? 'block' : 'none';
-            }
-        }
-        
-        // Скрытая комбинация клавиш для отображения логов (нажатие 'd' 5 раз)
-        let dKeyPressCount = 0;
-        let dKeyTimer = null;
-        document.addEventListener('keydown', function(e) {
-            if (e.key.toLowerCase() === 'd') {
-                dKeyPressCount++;
-                clearTimeout(dKeyTimer);
-                dKeyTimer = setTimeout(() => {
-                    dKeyPressCount = 0;
-                }, 1000);
-                
-                if (dKeyPressCount >= 5) {
-                    dKeyPressCount = 0;
-                    toggleDebugLogs();
-                }
-            }
-        });
-        
-        // Инициализация музыки с использованием Web Audio API и запасного варианта
+        // Инициализация музыки
         function initMusic() {
-            log('Инициализация музыки');
+            // Устанавливаем начальную громкость
+            elements.backgroundMusic.volume = 0.5;
             
-            try {
-                // Проверяем поддержку Web Audio API
-                window.AudioContext = window.AudioContext || window.webkitAudioContext;
-                
-                if (!window.AudioContext) {
-                    log('Web Audio API не поддерживается, используем запасной вариант', true);
-                    appState.useWebAudio = false;
-                    initFallbackAudio();
-                    return;
-                }
-                
-                log('Web Audio API поддерживается, создаем AudioContext');
-                
-                // Создаем аудиоконтекст
-                appState.audioContext = new AudioContext();
-                log(`AudioContext создан, текущее состояние: ${appState.audioContext.state}`);
-                
-                // Аудиофайл для воспроизведения
-                const audioFilePath = '/static/Waterflame_FieldofMemories.mp3';
-                log(`Загружаем аудиофайл: ${audioFilePath} (ок. 4 МБ)`);
-                
-                // Загружаем аудиофайл
-                fetch(audioFilePath)
-                    .then(response => {
-                        log(`Ответ сервера: ${response.status} ${response.statusText}`);
-                        if (!response.ok) {
-                            throw new Error(`Не удалось загрузить аудиофайл: ${response.status} ${response.statusText}`);
-                        }
-                        log('Файл успешно получен, конвертируем в ArrayBuffer');
-                        return response.arrayBuffer();
-                    })
-                    .then(arrayBuffer => {
-                        log(`ArrayBuffer получен, размер: ${(arrayBuffer.byteLength / 1024 / 1024).toFixed(2)} МБ`);
-                        log('Начинаем декодирование аудио');
-                        
-                        try {
-                            return appState.audioContext.decodeAudioData(arrayBuffer, 
-                                // Успешное декодирование
-                                buffer => {
-                                    log(`Аудиофайл успешно декодирован: длительность ${buffer.duration.toFixed(2)} сек, ${buffer.numberOfChannels} каналов, частота ${buffer.sampleRate} Гц`);
-                                    appState.audioBuffer = buffer;
-                                    appState.audioInitialized = true;
-                                    
-                                    // Пытаемся воспроизвести
-                                    if (!appState.isMuted) {
-                                        log('Аудио не заглушено, пытаемся воспроизвести');
-                                        playAudio();
-                                    } else {
-                                        log('Аудио заглушено, автоматическое воспроизведение пропущено');
-                                    }
-                                },
-                                // Ошибка декодирования
-                                error => {
-                                    log(`Ошибка декодирования: ${error.message}`, true);
-                                    fallbackToStandardAudio();
-                                }
-                            );
-                        } catch (decodeError) {
-                            log(`Исключение при декодировании: ${decodeError.message}`, true);
-                            fallbackToStandardAudio();
-                            throw decodeError; // Перебрасываем для обработки в catch ниже
-                        }
-                    })
-                    .catch(error => {
-                        log(`Ошибка при загрузке или декодировании аудио: ${error.message}`, true);
-                        fallbackToStandardAudio();
-                    });
-                
-                // Загружаем состояние звука из localStorage
-                const savedMuteState = localStorage.getItem('isMuted');
-                if (savedMuteState !== null) {
-                    appState.isMuted = savedMuteState === 'true';
-                    log(`Загружено сохраненное состояние звука: ${appState.isMuted ? 'выключен' : 'включен'}`);
-                }
-                
-                // Включаем индикатор загрузки на кнопке звука
-                elements.soundControl.classList.add('loading');
-                elements.soundControl.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-                
-                // Обновляем UI звука
+            // Загружаем состояние звука из localStorage
+            const savedMuteState = localStorage.getItem('isMuted');
+            if (savedMuteState !== null) {
+                appState.isMuted = savedMuteState === 'true';
+            }
+            
+            // Обновляем UI звука
+            updateSoundUI();
+            
+            // Обработчик ошибок воспроизведения
+            elements.backgroundMusic.addEventListener('error', () => {
+                console.error('Audio playback error');
+                appState.isMuted = true;
+                localStorage.setItem('isMuted', 'true');
                 updateSoundUI();
-                
-                // Добавляем обработчики для кнопки звука
-                elements.soundControl.addEventListener('click', toggleSound);
-                log('Добавлен обработчик для кнопки звука');
-                
-                // Обработчик для включения аудио после взаимодействия с пользователем
-                const handleUserInteraction = function() {
-                    log('Обнаружено взаимодействие пользователя');
-                    appState.wasInteraction = true;
-                    
-                    if (!appState.useWebAudio) {
-                        log('Используется стандартный Audio, пропускаем обработку взаимодействия для Web Audio API');
-                        return;
-                    }
-                    
-                    if (appState.audioContext) {
-                        log(`Текущее состояние AudioContext: ${appState.audioContext.state}`);
-                        
-                        if (appState.audioContext.state === 'suspended') {
-                            log('Пытаемся возобновить AudioContext');
-                            
-                            appState.audioContext.resume().then(() => {
-                                log('AudioContext успешно возобновлен после взаимодействия с пользователя');
-                                
-                                if (!appState.isMuted && appState.audioInitialized) {
-                                    log('Звук включен и аудио инициализировано, запускаем воспроизведение');
-                                    playAudio();
-                                } else {
-                                    log(`Воспроизведение не запущено: звук ${appState.isMuted ? 'выключен' : 'включен'}, аудио ${appState.audioInitialized ? 'инициализировано' : 'не инициализировано'}`);
-                                }
-                            }).catch(err => {
-                                log(`Ошибка при возобновлении AudioContext: ${err.message}`, true);
-                                appState.audioPlayAttempts++;
-                                
-                                if (appState.audioPlayAttempts >= 3) {
-                                    log('Превышено количество попыток воспроизведения через Web Audio API, переключаемся на стандартный Audio', true);
-                                    fallbackToStandardAudio();
-                                }
-                            });
-                        } else {
-                            log(`AudioContext уже в состоянии: ${appState.audioContext.state}, возобновление не требуется`);
-                            
-                            if (!appState.isMuted && appState.audioInitialized && !isAudioPlaying()) {
-                                log('Звук должен играть, но не играет. Пробуем еще раз.');
-                                playAudio();
-                            }
-                        }
-                    } else {
-                        log('AudioContext не создан, невозможно возобновить воспроизведение', true);
-                    }
-                };
-                
-                // Регистрируем обработчики взаимодействий
-                document.addEventListener('click', handleUserInteraction);
-                document.addEventListener('touchstart', handleUserInteraction);
-                log('Добавлены обработчики взаимодействия пользователя');
-                
-            } catch (error) {
-                log(`Ошибка инициализации аудио: ${error.message}`, true);
-                fallbackToStandardAudio();
-            }
-        }
-        
-        // Инициализация запасного варианта воспроизведения
-        function initFallbackAudio() {
-            log('Инициализация запасного варианта воспроизведения аудио');
+                showNotification('Ошибка воспроизведения звука');
+            });
             
-            try {
-                if (!elements.fallbackAudio) {
-                    log('Элемент fallbackAudio не найден', true);
-                    return;
+            // Обработчик изменения громкости
+            elements.backgroundMusic.addEventListener('volumechange', () => {
+                if (elements.backgroundMusic.volume === 0) {
+                    appState.isMuted = true;
                 }
-                
-                // Настраиваем элемент аудио
-                elements.fallbackAudio.volume = 0.5;
-                elements.fallbackAudio.muted = appState.isMuted;
-                
-                // Обработчик ошибок
-                elements.fallbackAudio.onerror = function(e) {
-                    log(`Ошибка запасного аудио: ${e.type}`, true);
-                };
-                
-                // Обработчик загрузки
-                elements.fallbackAudio.onloadeddata = function() {
-                    log('Запасное аудио успешно загружено');
-                    appState.audioInitialized = true;
-                    
-                    if (!appState.isMuted) {
-                        log('Звук включен, пытаемся воспроизвести через запасной вариант');
-                        playFallbackAudio();
-                    }
-                };
-                
-                // Обработчик старта воспроизведения
-                elements.fallbackAudio.onplaying = function() {
-                    log('Запасное аудио начало воспроизводиться');
-                    updateSoundUI();
-                };
-                
-                log('Запасной вариант аудио настроен');
-            } catch (error) {
-                log(`Ошибка инициализации запасного аудио: ${error.message}`, true);
-            }
-        }
-        
-        // Переключение на стандартный Audio элемент
-        function fallbackToStandardAudio() {
-            log('Переключение на стандартный Audio элемент');
-            
-            if (!appState.useWebAudio) {
-                log('Уже используем стандартный Audio, пропускаем переключение');
-                return;
-            }
-            
-            appState.useWebAudio = false;
-            
-            // Очищаем ресурсы Web Audio API
-            stopAudio();
-            appState.audioInitialized = false;
-            
-            // Инициализируем стандартный Audio
-            initFallbackAudio();
-        }
-        
-        // Функция для проверки, воспроизводится ли звук
-        function isAudioPlaying() {
-            if (appState.useWebAudio) {
-                return appState.audioSource !== null;
-            } else {
-                return elements.fallbackAudio && !elements.fallbackAudio.paused;
-            }
-        }
-        
-        // Воспроизведение аудио через Web Audio API
-        function playAudio() {
-            log('Вызвана функция playAudio()');
-            
-            if (!appState.useWebAudio) {
-                log('Web Audio API отключен, используем запасной вариант');
-                playFallbackAudio();
-                return;
-            }
-            
-            if (appState.isMuted) {
-                log('Не могу воспроизвести аудио: звук выключен');
-                return;
-            }
-            
-            if (!appState.audioInitialized) {
-                log('Не могу воспроизвести аудио: аудио не инициализировано');
-                return;
-            }
-            
-            if (!appState.audioBuffer) {
-                log('Не могу воспроизвести аудио: аудиобуфер не загружен');
-                return;
-            }
-            
-            try {
-                // Проверяем состояние аудиоконтекста
-                if (appState.audioContext.state === 'suspended') {
-                    log('AudioContext в состоянии suspended, пытаемся возобновить');
-                    appState.audioContext.resume().then(() => {
-                        log('AudioContext возобновлен, продолжаем воспроизведение');
-                        actuallyPlayAudio();
-                    }).catch(error => {
-                        log(`Ошибка при возобновлении AudioContext: ${error.message}`, true);
-                        appState.audioPlayAttempts++;
-                        
-                        if (appState.audioPlayAttempts >= 3) {
-                            log('Превышено количество попыток воспроизведения через Web Audio API, переключаемся на стандартный Audio', true);
-                            fallbackToStandardAudio();
-                        }
-                    });
-                } else {
-                    log(`AudioContext в состоянии ${appState.audioContext.state}, продолжаем воспроизведение`);
-                    actuallyPlayAudio();
-                }
-            } catch (error) {
-                log(`Ошибка воспроизведения аудио: ${error.message}`, true);
-                fallbackToStandardAudio();
-            }
-            
-            function actuallyPlayAudio() {
-                try {
-                    // Останавливаем предыдущий источник, если он есть
-                    if (appState.audioSource) {
-                        log('Останавливаем предыдущий аудиоисточник');
-                        try {
-                            appState.audioSource.stop();
-                        } catch (e) {
-                            log(`Не удалось остановить предыдущий источник: ${e.message}`);
-                        }
-                    }
-                    
-                    // Создаем новый источник
-                    log('Создаем новый аудиоисточник');
-                    appState.audioSource = appState.audioContext.createBufferSource();
-                    appState.audioSource.buffer = appState.audioBuffer;
-                    appState.audioSource.loop = true;
-                    
-                    // Подключаем к выходу
-                    log('Подключаем аудиоисточник к выходу');
-                    appState.audioSource.connect(appState.audioContext.destination);
-                    
-                    // Запускаем воспроизведение
-                    log('Запускаем воспроизведение');
-                    appState.audioSource.start(0);
-                    log('Воспроизведение аудио запущено успешно');
-                    
-                    // Визуальное обновление кнопки звука
-                    updateSoundUI();
-                    
-                    // Обработчик окончания воспроизведения
-                    appState.audioSource.onended = function(event) {
-                        log(`Воспроизведение аудио завершено, причина: ${event ? event.type : 'неизвестно'}`);
-                        appState.audioSource = null;
-                        
-                        if (!appState.isMuted) {
-                            log('Звук включен, перезапускаем воспроизведение');
-                            playAudio();
-                        }
-                    };
-                } catch (error) {
-                    log(`Ошибка при попытке воспроизведения: ${error.message}`, true);
-                    appState.audioPlayAttempts++;
-                    
-                    if (appState.audioPlayAttempts >= 3) {
-                        log('Превышено количество попыток воспроизведения через Web Audio API, переключаемся на стандартный Audio', true);
-                        fallbackToStandardAudio();
-                    }
-                }
-            }
-        }
-        
-        // Воспроизведение через стандартный Audio элемент
-        function playFallbackAudio() {
-            log('Вызвана функция playFallbackAudio()');
-            
-            if (!elements.fallbackAudio) {
-                log('Элемент fallbackAudio не найден', true);
-                return;
-            }
-            
-            if (appState.isMuted) {
-                log('Не могу воспроизвести аудио: звук выключен');
-                return;
-            }
-            
-            try {
-                elements.fallbackAudio.muted = false;
-                elements.fallbackAudio.currentTime = 0;
-                
-                log('Пытаемся воспроизвести через запасной вариант');
-                const promise = elements.fallbackAudio.play();
-                
-                if (promise !== undefined) {
-                    promise.then(() => {
-                        log('Запасное аудио успешно запущено');
-                        updateSoundUI();
-                    }).catch(error => {
-                        log(`Ошибка при воспроизведении запасного аудио: ${error.message}`, true);
-                        // Если даже запасной вариант не работает, просто уведомляем пользователя
-                        showNotification('Не удалось воспроизвести звук. Возможно, ваше устройство не поддерживает автоматическое воспроизведение.');
-                    });
-                }
-            } catch (error) {
-                log(`Исключение при воспроизведении запасного аудио: ${error.message}`, true);
-            }
-        }
-        
-        // Остановка аудио
-        function stopAudio() {
-            log('Вызвана функция stopAudio()');
-            
-            if (appState.useWebAudio) {
-                // Останавливаем Web Audio API
-                if (appState.audioSource) {
-                    try {
-                        log('Останавливаем аудиоисточник Web Audio API');
-                        appState.audioSource.stop();
-                        appState.audioSource = null;
-                        log('Воспроизведение аудио остановлено');
-                    } catch (error) {
-                        log(`Ошибка при остановке аудио: ${error.message}`, true);
-                    }
-                } else {
-                    log('Нет активного аудиоисточника Web Audio API для остановки');
-                }
-            } else {
-                // Останавливаем стандартный Audio
-                if (elements.fallbackAudio) {
-                    try {
-                        log('Останавливаем запасной аудиоэлемент');
-                        elements.fallbackAudio.pause();
-                        log('Запасное аудио остановлено');
-                    } catch (error) {
-                        log(`Ошибка при остановке запасного аудио: ${error.message}`, true);
-                    }
-                }
-            }
+                updateSoundUI();
+            });
         }
         
         // Обновление UI звука
         function updateSoundUI() {
-            elements.soundControl.classList.remove('loading');
-            
             if (appState.isMuted) {
-                log('Обновление UI: звук выключен');
                 elements.soundControl.classList.add('muted');
-                elements.soundControl.classList.remove('playing');
                 elements.soundControl.innerHTML = '<i class="fas fa-volume-mute"></i>';
-                stopAudio();
-                
-                // Также глушим запасной аудиоэлемент
-                if (elements.fallbackAudio) {
-                    elements.fallbackAudio.muted = true;
-                    elements.fallbackAudio.pause();
-                }
             } else {
-                log('Обновление UI: звук включен');
                 elements.soundControl.classList.remove('muted');
-                
-                // Проверяем реальное состояние воспроизведения
-                const isPlaying = isAudioPlaying();
-                log(`Текущее состояние воспроизведения: ${isPlaying ? 'играет' : 'не играет'}`);
-                
-                if (isPlaying) {
-                    elements.soundControl.classList.add('playing');
-                    elements.soundControl.innerHTML = '<i class="fas fa-volume-up"></i>';
-                } else {
-                    elements.soundControl.classList.remove('playing');
-                    elements.soundControl.innerHTML = '<i class="fas fa-volume"></i>';
-                    
-                    // Если звук включен, но не играет, пытаемся запустить
-                    if (appState.wasInteraction && appState.audioInitialized) {
-                        log('Звук должен играть, но не играет. Пробуем воспроизвести.');
-                        if (appState.useWebAudio) {
-                            playAudio();
-                        } else {
-                            playFallbackAudio();
-                        }
-                    }
-                }
+                elements.soundControl.innerHTML = '<i class="fas fa-volume-up"></i>';
             }
         }
         
         // Переключение звука
-        function toggleSound(e) {
-            // Предотвращаем распространение события клика
-            if (e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-            
-            log(`Переключение звука, текущее состояние: ${appState.isMuted ? 'выключен' : 'включен'}`);
+        function toggleSound() {
             appState.isMuted = !appState.isMuted;
             localStorage.setItem('isMuted', appState.isMuted.toString());
             
-            log(`Новое состояние звука: ${appState.isMuted ? 'выключен' : 'включен'}`);
-            
-            // Показываем индикатор загрузки
-            elements.soundControl.classList.add('loading');
-            elements.soundControl.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-            
-            if (appState.useWebAudio && appState.audioContext) {
-                // Если аудиоконтекст в состоянии suspended, возобновляем его
-                if (appState.audioContext.state === 'suspended') {
-                    log('Возобновляем приостановленный AudioContext');
-                    appState.audioContext.resume().then(() => {
-                        log('AudioContext успешно возобновлен');
-                        finishToggle();
-                    }).catch(error => {
-                        log(`Ошибка при возобновлении AudioContext: ${error.message}`, true);
-                        finishToggle();
-                    });
-                } else {
-                    finishToggle();
-                }
+            if (appState.isMuted) {
+                elements.backgroundMusic.pause();
             } else {
-                finishToggle();
+                // Пытаемся воспроизвести только после взаимодействия пользователя
+                if (appState.wasInteraction) {
+                    elements.backgroundMusic.play()
+                        .then(() => {
+                            updateSoundUI();
+                        })
+                        .catch(error => {
+                            console.error('Audio playback failed:', error);
+                            appState.isMuted = true;
+                            localStorage.setItem('isMuted', 'true');
+                            updateSoundUI();
+                            showNotification('Не удалось включить звук');
+                        });
+                }
             }
-            
-            function finishToggle() {
-                // Обновляем UI
-                updateSoundUI();
-                
-                // Воспроизводим или останавливаем в зависимости от состояния
+            updateSoundUI();
+        }
+        
+        // Обработчик первого взаимодействия
+        function handleFirstInteraction() {
+            if (!appState.wasInteraction) {
+                appState.wasInteraction = true;
+                // Если звук не отключен, пытаемся воспроизвести
                 if (!appState.isMuted) {
-                    log('Звук включен, пытаемся воспроизвести');
-                    if (appState.useWebAudio) {
-                        playAudio();
-                    } else {
-                        playFallbackAudio();
-                    }
-                    showNotification('Звук включен');
-                } else {
-                    log('Звук выключен, останавливаем воспроизведение');
-                    stopAudio();
-                    showNotification('Звук выключен');
+                    elements.backgroundMusic.play()
+                        .then(() => {
+                            console.log('Audio started after user interaction');
+                        })
+                        .catch(error => {
+                            console.error('Audio playback after interaction failed:', error);
+                        });
                 }
             }
         }
@@ -1185,18 +997,7 @@
         
         // Обработчик клика
         elements.clickerImage.addEventListener('click', async (e) => {
-            // Возобновляем аудиоконтекст при клике
-            if (appState.audioContext && appState.audioContext.state === 'suspended') {
-                try {
-                    await appState.audioContext.resume();
-                    console.log('AudioContext возобновлен после клика');
-                    if (!appState.isMuted && appState.audioInitialized) {
-                        playAudio();
-                    }
-                } catch (error) {
-                    console.error('Ошибка при возобновлении AudioContext:', error);
-                }
-            }
+            handleFirstInteraction();
             
             try {
                 const clickEffect = document.createElement('div');
@@ -1206,7 +1007,7 @@
                 elements.clickerContainer.appendChild(clickEffect);
                 
                 setTimeout(() => {
-                    clickEffect.remove();
+                    elements.clickerContainer.removeChild(clickEffect);
                 }, 600);
                 
                 const response = await fetch('/api/user/click', {
@@ -1245,6 +1046,11 @@
             showNotification('Elite Clicker - зарабатывайте $DGR кликами!');
         });
         
+        elements.soundControl.addEventListener('click', () => {
+            handleFirstInteraction();
+            toggleSound();
+        });
+        
         // Переключение страниц
         function switchPage(pageId) {
             document.querySelectorAll('.page').forEach(page => {
@@ -1270,48 +1076,314 @@
             handleFirstInteraction();
         }
         
+        // Генерация реферальной ссылки
+        function generateReferralLink() {
+            if (!userId) {
+                console.error('User ID not available for generating referral link');
+                return '';
+            }
+            
+            const baseUrl = 'https://t.me/edfasdasdasbot/Zakazapp';
+            const referralParam = `ref=${userId}`;
+            
+            // Формируем ссылку
+            // Telegram Mini App links can use startapp parameter for initial data
+            return `${baseUrl}?startapp=${referralParam}`;
+        }
+        
+        // Обработчик копирования реферальной ссылки
+        function copyReferralLink() {
+            const linkInput = document.getElementById('referralLink');
+            linkInput.select();
+            linkInput.setSelectionRange(0, 99999); // Для мобильных устройств
+            
+            navigator.clipboard.writeText(linkInput.value)
+                .then(() => {
+                    showNotification('Ссылка скопирована!');
+                })
+                .catch(err => {
+                    console.error('Ошибка при копировании: ', err);
+                    
+                    // Запасной вариант для старых браузеров
+                    try {
+                        document.execCommand('copy');
+                        showNotification('Ссылка скопирована!');
+                    } catch (e) {
+                        console.error('Ошибка при копировании (запасной вариант): ', e);
+                        showNotification('Не удалось скопировать ссылку');
+                    }
+                });
+        }
+        
+        // Загрузка реферальной статистики
+        async function loadReferralStats() {
+            if (!userId) {
+                console.error('User ID not available for loading referral stats');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/user/referrals', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Telegram-Init-Data': tg.initData || ''
+                    },
+                    body: JSON.stringify({ userId })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load referral stats');
+                }
+                
+                const data = await response.json();
+                appState.referralCount = data.referralCount || 0;
+                appState.referrals = data.referrals || [];
+                appState.claimableAmount = data.claimableAmount || 0;
+                appState.lastClaimTime = data.lastClaimTime ? new Date(data.lastClaimTime) : null;
+                
+                // Обновляем UI с реферальной статистикой
+                updateReferralUI();
+                
+            } catch (error) {
+                console.error('Error loading referral stats:', error);
+            }
+        }
+        
+        // Обновление UI реферальной системы
+        function updateReferralUI() {
+            // Устанавливаем реферальную ссылку
+            const referralLink = generateReferralLink();
+            document.getElementById('referralLink').value = referralLink;
+            
+            // Обновляем счетчик рефералов
+            document.getElementById('referralCount').textContent = appState.referralCount;
+            
+            // Обновляем сумму для сбора
+            document.getElementById('claimableAmount').textContent = `${formatNumber(appState.claimableAmount)} $DGR`;
+            
+            // Обновляем статус кнопки Claim
+            const claimBtn = document.getElementById('claimBtn');
+            let nextClaimTime = '';
+            let canClaim = false;
+            
+            if (appState.lastClaimTime) {
+                const now = new Date();
+                const nextClaimDate = new Date(appState.lastClaimTime.getTime() + appState.claimCooldown);
+                
+                if (now < nextClaimDate) {
+                    // Еще не прошло 8 часов
+                    const timeLeft = nextClaimDate - now;
+                    const hours = Math.floor(timeLeft / (60 * 60 * 1000));
+                    const minutes = Math.floor((timeLeft % (60 * 60 * 1000)) / (60 * 1000));
+                    const seconds = Math.floor((timeLeft % (60 * 1000)) / 1000);
+                    
+                    nextClaimTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                    canClaim = false;
+                } else {
+                    // Прошло более 8 часов
+                    nextClaimTime = 'Доступно сейчас';
+                    canClaim = (appState.claimableAmount > 0);
+                }
+            } else {
+                // Еще ни разу не собирали
+                nextClaimTime = 'Доступно сейчас';
+                canClaim = (appState.claimableAmount > 0);
+            }
+            
+            document.getElementById('nextClaimTime').textContent = nextClaimTime;
+            claimBtn.disabled = !canClaim;
+            
+            // Обновляем список рефералов
+            const referralsList = document.getElementById('referralsList');
+            referralsList.innerHTML = '';
+            
+            if (appState.referrals.length === 0) {
+                // Нет рефералов
+                const placeholder = document.createElement('li');
+                placeholder.className = 'referral-list-placeholder';
+                placeholder.textContent = 'У вас пока нет рефералов';
+                referralsList.appendChild(placeholder);
+                
+                // Скрываем блок "И еще N рефералов"
+                document.getElementById('moreReferrals').style.display = 'none';
+            } else {
+                // Есть рефералы - показываем первые 10
+                const displayCount = Math.min(appState.referrals.length, 10);
+                
+                for (let i = 0; i < displayCount; i++) {
+                    const referral = appState.referrals[i];
+                    const listItem = document.createElement('li');
+                    
+                    listItem.innerHTML = `
+                        <div class="referral-user">
+                            <div class="referral-avatar">
+                                ${referral.username.charAt(0).toUpperCase()}
+                            </div>
+                            <span class="referral-username">@${referral.username}</span>
+                        </div>
+                        <div class="referral-earnings">
+                            ${formatNumber(referral.earnings)} $DGR
+                        </div>
+                    `;
+                    
+                    referralsList.appendChild(listItem);
+                }
+                
+                // Обновляем блок "И еще N рефералов"
+                const hiddenCount = appState.referralCount - displayCount;
+                if (hiddenCount > 0) {
+                    document.getElementById('hiddenReferralsCount').textContent = hiddenCount;
+                    document.getElementById('moreReferrals').style.display = 'block';
+                } else {
+                    document.getElementById('moreReferrals').style.display = 'none';
+                }
+            }
+        }
+        
+        // Функция для сбора дохода от рефералов
+        async function claimReferralEarnings() {
+            if (!userId) {
+                console.error('User ID not available for claiming referral earnings');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/user/claim-referrals', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Telegram-Init-Data': tg.initData || ''
+                    },
+                    body: JSON.stringify({ userId })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to claim referral earnings');
+                }
+                
+                const data = await response.json();
+                
+                // Обновляем данные
+                appState.totalClicks += data.claimedAmount;
+                appState.claimableAmount = 0;
+                appState.lastClaimTime = new Date();
+                
+                // Обновляем UI
+                updateUI();
+                updateReferralUI();
+                
+                // Показываем уведомление
+                showNotification(`Получено ${formatNumber(data.claimedAmount)} $DGR от рефералов!`);
+                
+            } catch (error) {
+                console.error('Error claiming referral earnings:', error);
+                showNotification('Ошибка при получении дохода');
+            }
+        }
+        
+        // Обновляет таймер для следующего claim каждую секунду
+        function startClaimTimer() {
+            setInterval(() => {
+                if (appState.lastClaimTime) {
+                    const now = new Date();
+                    const nextClaimDate = new Date(appState.lastClaimTime.getTime() + appState.claimCooldown);
+                    
+                    if (now < nextClaimDate) {
+                        // Еще не прошло 8 часов
+                        const timeLeft = nextClaimDate - now;
+                        const hours = Math.floor(timeLeft / (60 * 60 * 1000));
+                        const minutes = Math.floor((timeLeft % (60 * 60 * 1000)) / (60 * 1000));
+                        const seconds = Math.floor((timeLeft % (60 * 1000)) / 1000);
+                        
+                        const nextClaimTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                        document.getElementById('nextClaimTime').textContent = nextClaimTime;
+                        document.getElementById('claimBtn').disabled = true;
+                    } else {
+                        // Прошло более 8 часов
+                        document.getElementById('nextClaimTime').textContent = 'Доступно сейчас';
+                        document.getElementById('claimBtn').disabled = (appState.claimableAmount <= 0);
+                    }
+                }
+            }, 1000);
+        }
+        
+        // Проверка и обработка реферального параметра
+        async function checkReferralParam() {
+            if (!userId) {
+                return;
+            }
+            
+            // Получаем параметры из startapp или ссылки Telegram
+            const startApp = tg.initDataUnsafe.start_param;
+            
+            // Проверяем, содержит ли startApp реферальный параметр
+            if (startApp && startApp.startsWith('ref=')) {
+                const referrerId = startApp.replace('ref=', '');
+                
+                // Отправляем запрос на сервер для регистрации реферала
+                try {
+                    const response = await fetch('/api/user/referral-register', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Telegram-Init-Data': tg.initData || ''
+                        },
+                        body: JSON.stringify({ 
+                            userId,
+                            referrerId 
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        console.log('Referral registered successfully');
+                    }
+                } catch (error) {
+                    console.error('Error registering referral:', error);
+                }
+            }
+        }
+        
         // Инициализация приложения
         async function initApp() {
             try {
-                console.log('Инициализация приложения...');
-                
-                // Проверяем наличие Telegram WebApp
-                if (window.Telegram && window.Telegram.WebApp) {
-                    tg.ready();
-                    console.log('Telegram WebApp готов');
-                } else {
-                    console.warn('Telegram WebApp не обнаружен, работаем в режиме отладки');
-                }
-                
-                // Инициализируем музыку
+                tg.ready();
                 initMusic();
+                await loadUserData();
                 
-                // Загружаем данные пользователя
-                try {
-                    await loadUserData();
-                } catch (error) {
-                    console.warn('Не удалось загрузить данные пользователя:', error);
-                    // Продолжаем работу даже без данных пользователя для локальной отладки
-                }
+                // Загружаем реферальную статистику
+                await loadReferralStats();
+                
+                // Проверяем реферальный параметр
+                await checkReferralParam();
+                
+                // Обработчик для кнопки копирования ссылки
+                document.getElementById('copyLinkBtn').addEventListener('click', copyReferralLink);
+                
+                // Обработчик для кнопки Claim
+                document.getElementById('claimBtn').addEventListener('click', claimReferralEarnings);
+                
+                // Запускаем таймер для обновления времени до следующего claim
+                startClaimTimer();
                 
                 setInterval(updateClicks, 1000);
-                
-                // Если мы вне Telegram, не пытаемся повторно загружать данные
-                if (window.Telegram && window.Telegram.WebApp) {
-                    setInterval(loadUserData, 30000);
-                }
+                setInterval(loadUserData, 30000);
                 
                 // Обработчики навигации
                 elements.mainBtn.addEventListener('click', () => switchPage('mainPage'));
                 elements.tasksBtn.addEventListener('click', () => switchPage('tasksPage'));
                 elements.profileBtn.addEventListener('click', () => switchPage('profilePage'));
-                elements.friendsBtn.addEventListener('click', () => switchPage('friendsPage'));
+                elements.friendsBtn.addEventListener('click', () => {
+                    switchPage('friendsPage');
+                    updateReferralUI(); // Обновляем реферальный UI при переключении на страницу
+                });
                 
-                // Добавляем уведомление об успешной загрузке
-                showNotification('Приложение загружено');
+                // Глобальный обработчик взаимодействия
+                document.addEventListener('click', handleFirstInteraction, { once: true });
                 
             } catch (error) {
-                console.error('Ошибка инициализации приложения:', error);
+                console.error('Initialization error:', error);
                 showNotification('Ошибка инициализации приложения');
                 setTimeout(initApp, 5000);
             }
