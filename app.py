@@ -643,6 +643,89 @@ def get_ranking():
         app.logger.error(f"Error in get_ranking: {str(e)}")
         return jsonify({'error': 'Internal server error'}), 500
 
+@app.route('/api/ranking/referrals', methods=['POST'])
+def get_referral_ranking():
+    try:
+        data = request.get_json()
+        user_id = data.get('userId')
+        username = data.get('username')
+        
+        if not user_id:
+            return jsonify({'error': 'User ID is required'}), 400
+        
+        # Обновляем имя пользователя, если оно передано
+        if username and username != 'user':
+            try:
+                with get_db_connection() as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("""
+                        UPDATE users SET username = %s WHERE user_id = %s
+                        """, (username, user_id))
+                        conn.commit()
+            except Exception as e:
+                app.logger.error(f"Error updating username: {str(e)}")
+        
+        with get_db_connection() as conn:
+            with conn.cursor(cursor_factory=DictCursor) as cur:
+                # Получаем топ-20 игроков по количеству рефералов
+                cur.execute("""
+                SELECT u.user_id, u.username, COUNT(r.id) as referral_count
+                FROM users u
+                LEFT JOIN referrals r ON u.user_id = r.referrer_id
+                GROUP BY u.user_id
+                ORDER BY referral_count DESC
+                LIMIT 20
+                """)
+                
+                top_players = []
+                for row in cur.fetchall():
+                    # Если имя пользователя отсутствует или установлено в default 'user'
+                    display_username = row['username']
+                    if not display_username or display_username == 'user':
+                        display_username = f"User{row['user_id'] % 1000}"
+                    
+                    top_players.append({
+                        'userId': row['user_id'],
+                        'username': display_username,
+                        'referralCount': row['referral_count'] or 0
+                    })
+                
+                # Определяем ранг текущего пользователя по количеству рефералов
+                cur.execute("""
+                SELECT count(*) as total_users FROM users
+                """)
+                total_users = cur.fetchone()['total_users']
+                
+                cur.execute("""
+                SELECT count(*) as better_users
+                FROM (
+                    SELECT u.user_id, COUNT(r.id) as referral_count
+                    FROM users u
+                    LEFT JOIN referrals r ON u.user_id = r.referrer_id
+                    GROUP BY u.user_id
+                ) t
+                WHERE t.referral_count > (
+                    SELECT COUNT(r.id) 
+                    FROM referrals r 
+                    WHERE r.referrer_id = %s
+                )
+                """, (user_id,))
+                
+                better_users = cur.fetchone()['better_users']
+                user_rank = better_users + 1  # Ранг = количество пользователей с большим числом рефералов + 1
+                
+                return jsonify({
+                    'topPlayers': top_players,
+                    'userRank': {
+                        'rank': user_rank,
+                        'totalUsers': total_users
+                    }
+                })
+                
+    except Exception as e:
+        app.logger.error(f"Error in get_referral_ranking: {str(e)}")
+        return jsonify({'error': 'Internal server error'}), 500
+
 @app.route('/health')
 def health_check():
     try:
