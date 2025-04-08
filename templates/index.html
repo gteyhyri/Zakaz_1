@@ -854,6 +854,159 @@
             font-size: 18px;
         }
 
+        /* Стили для страницы рейтинга рефералов */
+        .referral-ranking-container {
+            width: 100%;
+            max-width: 320px;
+            background-color: var(--white);
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .referral-ranking-title {
+            color: var(--dark-blue);
+            margin-bottom: 4px;
+            font-size: 22px;
+            font-weight: 700;
+            text-align: center;
+        }
+        
+        .referral-ranking-description {
+            color: var(--dark-gray);
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+        
+        .referral-ranking-list-container {
+            background-color: var(--light-blue);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .referral-ranking-header {
+            display: flex;
+            background-color: var(--primary-blue);
+            color: var(--white);
+            padding: 12px 16px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .referral-rank-column {
+            width: 20%;
+            text-align: center;
+        }
+        
+        .referral-user-column {
+            width: 45%;
+            text-align: left;
+        }
+        
+        .referral-count-column {
+            width: 35%;
+            text-align: right;
+        }
+        
+        .referral-ranking-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .referral-ranking-item {
+            display: flex;
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        
+        .referral-ranking-item:last-child {
+            border-bottom: none;
+        }
+        
+        .referral-ranking-item:hover {
+            background-color: rgba(255,255,255,0.5);
+        }
+        
+        .referral-ranking-top-1 {
+            background-color: rgba(255, 215, 0, 0.2);
+        }
+        
+        .referral-ranking-top-2 {
+            background-color: rgba(192, 192, 192, 0.2);
+        }
+        
+        .referral-ranking-top-3 {
+            background-color: rgba(205, 127, 50, 0.2);
+        }
+        
+        .referral-ranking-you {
+            background-color: rgba(42, 127, 255, 0.2);
+            font-weight: 600;
+        }
+        
+        .referral-ranking-rank {
+            width: 20%;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .referral-ranking-top-1 .referral-ranking-rank {
+            color: gold;
+        }
+        
+        .referral-ranking-top-2 .referral-ranking-rank {
+            color: silver;
+        }
+        
+        .referral-ranking-top-3 .referral-ranking-rank {
+            color: #CD7F32;
+        }
+        
+        .referral-ranking-username {
+            width: 45%;
+            text-align: left;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .referral-ranking-count {
+            width: 35%;
+            text-align: right;
+            color: var(--dark-blue);
+            font-weight: 500;
+        }
+        
+        .referral-ranking-list-loading {
+            padding: 24px;
+            text-align: center;
+            color: var(--dark-gray);
+        }
+        
+        .your-referral-rank {
+            background-color: var(--light-blue);
+            padding: 12px 16px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .your-referral-rank-label {
+            color: var(--dark-gray);
+            margin-right: 8px;
+        }
+        
+        .your-referral-rank-value {
+            color: var(--primary-blue);
+            font-weight: 700;
+            font-size: 18px;
+        }
+
         @media (max-width: 480px) {
             .clicker-image {
                 width: 200px;
@@ -955,6 +1108,33 @@
             <div class="your-rank">
                 <span class="your-rank-label">Ваше место:</span>
                 <span class="your-rank-value" id="yourRank">--</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="page" id="referralRankingPage">
+        <div class="referral-ranking-container">
+            <h2 class="referral-ranking-title">Топ по рефералам</h2>
+            <p class="referral-ranking-description">Список игроков с наибольшим количеством приглашенных друзей</p>
+            
+            <div class="referral-ranking-list-container">
+                <div class="referral-ranking-header">
+                    <div class="referral-rank-column">Место</div>
+                    <div class="referral-user-column">Игрок</div>
+                    <div class="referral-count-column">Рефералы</div>
+                </div>
+                
+                <div class="referral-ranking-list" id="referralRankingList">
+                    <!-- Будет заполнено динамически -->
+                    <div class="referral-ranking-list-loading">
+                        <i class="fas fa-spinner fa-spin"></i> Загрузка рейтинга...
+                    </div>
+                </div>
+            </div>
+            
+            <div class="your-referral-rank">
+                <span class="your-referral-rank-label">Ваше место:</span>
+                <span class="your-referral-rank-value" id="yourReferralRank">--</span>
             </div>
         </div>
     </div>
@@ -1123,6 +1303,7 @@
             profilePage: document.getElementById('profilePage'),
             friendsPage: document.getElementById('friendsPage'),
             rankingPage: document.getElementById('rankingPage'),
+            referralRankingPage: document.getElementById('referralRankingPage'),
             // Элементы звука
             soundControl: document.getElementById('soundControl'),
             backgroundMusic: document.getElementById('backgroundMusic')
@@ -1397,7 +1578,8 @@
         });
         
         elements.referralsRankItem.addEventListener('click', () => {
-            switchPage('friendsPage');
+            switchPage('referralRankingPage');
+            loadReferralRanking();
         });
         
         // Переключение страниц
@@ -1806,6 +1988,96 @@
             
             // Обновляем информацию о месте пользователя
             const yourRankElement = document.getElementById('yourRank');
+            if (userRank && userRank.rank) {
+                yourRankElement.textContent = `${userRank.rank} из ${userRank.totalUsers}`;
+            } else {
+                yourRankElement.textContent = '--';
+            }
+        }
+        
+        // Загрузка рейтинга по рефералам
+        async function loadReferralRanking() {
+            if (!userId) {
+                console.error('User ID not available for loading referral ranking');
+                return;
+            }
+            
+            try {
+                const rankingList = document.getElementById('referralRankingList');
+                rankingList.innerHTML = '<div class="referral-ranking-list-loading"><i class="fas fa-spinner fa-spin"></i> Загрузка рейтинга...</div>';
+                
+                const response = await fetch('/api/ranking/referrals', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Telegram-Init-Data': tg.initData || ''
+                    },
+                    body: JSON.stringify({ 
+                        userId,
+                        username: username
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load referral ranking data');
+                }
+                
+                const data = await response.json();
+                const topPlayers = data.topPlayers || [];
+                const userRank = data.userRank || { rank: '--', totalUsers: '--' };
+                
+                // Обновляем ранг по рефералам
+                appState.referralsRank = userRank.rank;
+                elements.referralsRankValue.textContent = userRank.rank;
+                
+                // Обновляем UI с рейтингом
+                updateReferralRankingUI(topPlayers, userRank);
+                
+            } catch (error) {
+                console.error('Error loading referral ranking data:', error);
+                document.getElementById('referralRankingList').innerHTML = 
+                    '<div class="referral-ranking-list-loading">Не удалось загрузить рейтинг. Попробуйте позже.</div>';
+                document.getElementById('yourReferralRank').textContent = '--';
+            }
+        }
+        
+        // Обновление UI рейтинга по рефералам
+        function updateReferralRankingUI(topPlayers, userRank) {
+            const rankingList = document.getElementById('referralRankingList');
+            rankingList.innerHTML = '';
+            
+            if (!topPlayers || topPlayers.length === 0) {
+                rankingList.innerHTML = '<div class="referral-ranking-list-loading">Рейтинг пока пуст</div>';
+                return;
+            }
+            
+            topPlayers.forEach((player, index) => {
+                const rankItem = document.createElement('div');
+                let rankClass = '';
+                
+                if (index === 0) rankClass = 'referral-ranking-top-1';
+                else if (index === 1) rankClass = 'referral-ranking-top-2';
+                else if (index === 2) rankClass = 'referral-ranking-top-3';
+                
+                if (player.userId == userId) {
+                    rankClass += ' referral-ranking-you';
+                }
+                
+                const displayUsername = player.username && player.username !== 'user' ? 
+                    player.username : `User${player.userId % 1000}`;
+                
+                rankItem.className = `referral-ranking-item ${rankClass}`;
+                rankItem.innerHTML = `
+                    <div class="referral-ranking-rank">${index + 1}</div>
+                    <div class="referral-ranking-username">@${displayUsername}</div>
+                    <div class="referral-ranking-count">${formatNumber(player.referralCount)}</div>
+                `;
+                
+                rankingList.appendChild(rankItem);
+            });
+            
+            // Обновляем информацию о месте пользователя
+            const yourRankElement = document.getElementById('yourReferralRank');
             if (userRank && userRank.rank) {
                 yourRankElement.textContent = `${userRank.rank} из ${userRank.totalUsers}`;
             } else {
