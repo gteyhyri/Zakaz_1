@@ -125,23 +125,61 @@
         }
 
         .clicker-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .clicker-image-wrapper {
             position: relative;
-            margin: 32px 0;
+            width: 280px;
+            height: 280px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(42, 127, 255, 0.1);
+            border-radius: 50%;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(42, 127, 255, 0.2);
+            transition: all 0.3s ease;
         }
 
         .clicker-image {
-            width: 240px;
-            height: 240px;
+            width: 100%;
+            height: 100%;
             border-radius: 50%;
             object-fit: cover;
             cursor: pointer;
-            transition: var(--transition);
-            border: 4px solid var(--white);
-            background: none;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 1;
+        }
+
+        .clicker-image-wrapper::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: rgba(42, 127, 255, 0.05);
+            filter: blur(10px);
+            z-index: 0;
+        }
+
+        .clicker-image-wrapper:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 30px rgba(42, 127, 255, 0.3);
         }
 
         .clicker-image:active {
             transform: scale(0.95);
+        }
+
+        .clicker-image-wrapper:active {
+            transform: scale(0.98);
+            box-shadow: 0 0 15px rgba(42, 127, 255, 0.2);
         }
 
         .click-effect {
@@ -1207,8 +1245,20 @@
             <h1 class="title">Elite Clicker</h1>
             <p class="subtitle">Нажимайте на изображение для получения $DGR</p>
             
-            <div class="clicker-container" id="clickerContainer">
-                <img src="/static/IMG_8264.PNG" alt="Click me" class="clicker-image" id="clickerImage">
+            <div class="clicker-container">
+                <div class="clicker-image-wrapper">
+                    <img src="/static/clicker.png" alt="Click" class="clicker-image" id="clicker">
+                </div>
+                <div class="clicker-stats">
+                    <div class="clicker-stat">
+                        <span class="stat-label">Clicks:</span>
+                        <span class="stat-value" id="clickCount">0</span>
+                    </div>
+                    <div class="clicker-stat">
+                        <span class="stat-label">Balance:</span>
+                        <span class="stat-value" id="balance">0</span>
+                    </div>
+                </div>
             </div>
             
             <div class="stats-container">
@@ -1495,7 +1545,7 @@
         
         // Элементы DOM
         const elements = {
-            clickerImage: document.getElementById('clickerImage'),
+            clickerImage: document.getElementById('clicker'),
             clickerContainer: document.getElementById('clickerContainer'),
             totalClicks: document.getElementById('totalClicks'),
             availableClicks: document.getElementById('availableClicks'),
