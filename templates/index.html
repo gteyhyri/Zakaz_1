@@ -136,12 +136,13 @@
             object-fit: cover;
             cursor: pointer;
             transition: var(--transition);
-            border: 4px solid var(--white);
-            background: none;
+            border: 4px solid var(--primary-blue); /* Изменяем цвет контура на основной синий */
+            background-color: rgba(42, 127, 255, 0.1); /* Светло-голубой фон с небольшой прозрачностью */
+            box-shadow: 0 0 0 8px rgba(42, 127, 255, 0.2); /* Добавляем внешнюю тень для эффекта "контура" */
         }
-
         .clicker-image:active {
             transform: scale(0.95);
+            background-color: rgba(42, 127, 255, 0.15); /* Немного темнее при нажатии */
         }
 
         .click-effect {
