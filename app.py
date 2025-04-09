@@ -75,6 +75,19 @@ def check_and_update_schema():
             app.logger.info("Adding earnings column to referrals table")
             cur.execute("ALTER TABLE referrals ADD COLUMN earnings INTEGER DEFAULT 0")
         
+        # Проверяем наличие столбцов для уровней улучшений
+        for column in ['click_upgrade_level', 'storage_upgrade_level', 'speed_upgrade_level']:
+            cur.execute(f"""
+            SELECT EXISTS (
+                SELECT FROM information_schema.columns 
+                WHERE table_name = 'users' AND column_name = '{column}'
+            )
+            """)
+            
+            if not cur.fetchone()[0]:
+                app.logger.info(f"Adding {column} column to users table")
+                cur.execute(f"ALTER TABLE users ADD COLUMN {column} INTEGER DEFAULT 0")
+        
         conn.commit()
         app.logger.info("Database schema updated successfully")
     except Exception as e:
@@ -100,7 +113,10 @@ def init_db():
             regen_rate NUMERIC DEFAULT 1,
             last_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            last_claim_time TIMESTAMP NULL
+            last_claim_time TIMESTAMP NULL,
+            click_upgrade_level INTEGER DEFAULT 0,
+            storage_upgrade_level INTEGER DEFAULT 0,
+            speed_upgrade_level INTEGER DEFAULT 0
         )
         """)
         
@@ -153,8 +169,9 @@ def get_user():
                     # Если пользователя нет, создаем нового
                     cur.execute("""
                     INSERT INTO users (user_id, username, total_clicks, available_clicks, 
-                                      click_power, max_clicks, regen_rate, last_update, created_at)
-                    VALUES (%s, %s, 0, 100, 1, 100, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                                      click_power, max_clicks, regen_rate, last_update, created_at,
+                                      click_upgrade_level, storage_upgrade_level, speed_upgrade_level)
+                    VALUES (%s, %s, 0, 100, 1, 100, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0, 0, 0)
                     RETURNING *
                     """, (user_id, username))
                     user_data = cur.fetchone()
@@ -180,12 +197,32 @@ def get_user():
                 
                 conn.commit()
                 
+                # Подготовка данных об уровнях улучшений и их стоимости
+                upgrade_levels = {
+                    'click': {
+                        'level': user_data['click_upgrade_level'],
+                        'cost': 200 * (2 ** user_data['click_upgrade_level']) if user_data['click_upgrade_level'] < 12 else None,
+                        'maxLevel': 12
+                    },
+                    'storage': {
+                        'level': user_data['storage_upgrade_level'],
+                        'cost': 200 * (2 ** user_data['storage_upgrade_level']) if user_data['storage_upgrade_level'] < 12 else None,
+                        'maxLevel': 12
+                    },
+                    'speed': {
+                        'level': user_data['speed_upgrade_level'],
+                        'cost': 2000 * (2 ** user_data['speed_upgrade_level']) if user_data['speed_upgrade_level'] < 12 else None,
+                        'maxLevel': 12
+                    }
+                }
+                
                 return jsonify({
                     'totalClicks': user_data['total_clicks'],
                     'availableClicks': float(user_data['available_clicks']),
                     'clickPower': user_data['click_power'],
                     'maxClicks': user_data['max_clicks'],
-                    'regenRate': user_data['regen_rate']
+                    'regenRate': float(user_data['regen_rate']),
+                    'upgradeLevels': upgrade_levels
                 })
                 
     except Exception as e:
@@ -245,49 +282,162 @@ def handle_upgrade():
         if not user_id or not upgrade_type:
             return jsonify({'error': 'Missing parameters'}), 400
         
-        valid_upgrades = ['power', 'regen', 'max']
+        valid_upgrades = ['click', 'storage', 'speed']
         if upgrade_type not in valid_upgrades:
             return jsonify({'error': 'Invalid upgrade type'}), 400
         
         with get_db_connection() as conn:
             with conn.cursor(cursor_factory=DictCursor) as cur:
-                if upgrade_type == 'max':
+                # Получаем текущие данные пользователя
+                cur.execute("""
+                SELECT total_clicks, click_upgrade_level, storage_upgrade_level, speed_upgrade_level
+                FROM users
+                WHERE user_id = %s
+                """, (user_id,))
+                
+                user_data = cur.fetchone()
+                if not user_data:
+                    return jsonify({'error': 'User not found'}), 404
+                
+                # Рассчитываем стоимость и значение улучшения в зависимости от типа
+                if upgrade_type == 'click':
+                    level = user_data['click_upgrade_level']
+                    next_level = level + 1
+                    
+                    # Максимальный уровень улучшения
+                    if next_level > 12:
+                        return jsonify({'error': 'Maximum upgrade level reached'}), 400
+                    
+                    # Стоимость улучшения (200 * 2^level)
+                    cost = 200 * (2 ** level)
+                    
+                    # Проверка, достаточно ли денег у пользователя
+                    if user_data['total_clicks'] < cost:
+                        return jsonify({'error': 'Not enough clicks'}), 400
+                    
+                    # Определение бонуса за клик в зависимости от уровня
+                    click_bonus = 0
+                    if next_level == 1:
+                        click_bonus = 2
+                    elif next_level == 2:
+                        click_bonus = 3.5
+                    elif next_level == 3:
+                        click_bonus = 1.5
+                    elif next_level == 4:
+                        click_bonus = 4
+                    else:
+                        click_bonus = 1 + (next_level - 4)
+                    
+                    # Обновляем данные пользователя
                     cur.execute("""
                     UPDATE users 
                     SET 
-                        max_clicks = max_clicks + 10,
-                        available_clicks = available_clicks + 10,
+                        total_clicks = total_clicks - %s,
+                        click_power = click_power + %s,
+                        click_upgrade_level = %s,
                         last_update = CURRENT_TIMESTAMP
                     WHERE user_id = %s
                     RETURNING *
-                    """, (user_id,))
-                elif upgrade_type == 'regen':
+                    """, (cost, click_bonus, next_level, user_id))
+                
+                elif upgrade_type == 'storage':
+                    level = user_data['storage_upgrade_level']
+                    next_level = level + 1
+                    
+                    # Максимальный уровень улучшения
+                    if next_level > 12:
+                        return jsonify({'error': 'Maximum upgrade level reached'}), 400
+                    
+                    # Стоимость улучшения (200 * 2^level)
+                    cost = 200 * (2 ** level)
+                    
+                    # Проверка, достаточно ли денег у пользователя
+                    if user_data['total_clicks'] < cost:
+                        return jsonify({'error': 'Not enough clicks'}), 400
+                    
+                    # Определение бонуса к хранилищу в зависимости от уровня
+                    storage_bonus = 0
+                    if next_level == 1:
+                        storage_bonus = 20
+                    elif next_level == 2:
+                        storage_bonus = 25
+                    elif next_level == 3:
+                        storage_bonus = 30
+                    else:
+                        storage_bonus = 20
+                    
+                    # Обновляем данные пользователя
                     cur.execute("""
                     UPDATE users 
                     SET 
-                        regen_rate = regen_rate + 0.1,
+                        total_clicks = total_clicks - %s,
+                        max_clicks = max_clicks + %s,
+                        available_clicks = available_clicks + %s,
+                        storage_upgrade_level = %s,
                         last_update = CURRENT_TIMESTAMP
                     WHERE user_id = %s
                     RETURNING *
-                    """, (user_id,))
-                else:
+                    """, (cost, storage_bonus, storage_bonus, next_level, user_id))
+                
+                elif upgrade_type == 'speed':
+                    level = user_data['speed_upgrade_level']
+                    next_level = level + 1
+                    
+                    # Максимальный уровень улучшения
+                    if next_level > 12:
+                        return jsonify({'error': 'Maximum upgrade level reached'}), 400
+                    
+                    # Стоимость улучшения (2000 * 2^level)
+                    cost = 2000 * (2 ** level)
+                    
+                    # Проверка, достаточно ли денег у пользователя
+                    if user_data['total_clicks'] < cost:
+                        return jsonify({'error': 'Not enough clicks'}), 400
+                    
+                    # Увеличение скорости восстановления (скорость регенерации + 0.05)
+                    speed_bonus = 0.05
+                    
+                    # Обновляем данные пользователя
                     cur.execute("""
                     UPDATE users 
                     SET 
-                        click_power = click_power + 1,
+                        total_clicks = total_clicks - %s,
+                        regen_rate = regen_rate + %s,
+                        speed_upgrade_level = %s,
                         last_update = CURRENT_TIMESTAMP
                     WHERE user_id = %s
                     RETURNING *
-                    """, (user_id,))
+                    """, (cost, speed_bonus, next_level, user_id))
                 
                 updated_data = cur.fetchone()
                 conn.commit()
                 
+                # Подготовка данных для ответа, включая информацию о стоимости следующего улучшения
+                next_level_data = {
+                    'click': {
+                        'level': updated_data['click_upgrade_level'],
+                        'cost': 200 * (2 ** updated_data['click_upgrade_level']) if updated_data['click_upgrade_level'] < 12 else None,
+                        'maxLevel': 12
+                    },
+                    'storage': {
+                        'level': updated_data['storage_upgrade_level'],
+                        'cost': 200 * (2 ** updated_data['storage_upgrade_level']) if updated_data['storage_upgrade_level'] < 12 else None,
+                        'maxLevel': 12
+                    },
+                    'speed': {
+                        'level': updated_data['speed_upgrade_level'],
+                        'cost': 2000 * (2 ** updated_data['speed_upgrade_level']) if updated_data['speed_upgrade_level'] < 12 else None,
+                        'maxLevel': 12
+                    }
+                }
+                
                 return jsonify({
+                    'totalClicks': updated_data['total_clicks'],
                     'clickPower': updated_data['click_power'],
-                    'regenRate': updated_data['regen_rate'],
+                    'regenRate': float(updated_data['regen_rate']),
                     'maxClicks': updated_data['max_clicks'],
-                    'availableClicks': float(updated_data['available_clicks'])
+                    'availableClicks': float(updated_data['available_clicks']),
+                    'upgradeLevels': next_level_data
                 })
                 
     except Exception as e:
