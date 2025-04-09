@@ -96,6 +96,14 @@ def check_and_update_schema():
         if 'cur' in locals(): cur.close()
         if 'conn' in locals(): conn.close()
 
+# Вызываем инициализацию и обновление схемы базы данных
+try:
+    app.logger.info("Checking and updating database schema...")
+    check_and_update_schema()
+    app.logger.info("Schema update completed")
+except Exception as e:
+    app.logger.error(f"Error during schema update: {str(e)}")
+
 def init_db():
     try:
         conn = get_db_connection()
@@ -167,13 +175,27 @@ def get_user():
                 
                 if not user_exists:
                     # Если пользователя нет, создаем нового
-                    cur.execute("""
-                    INSERT INTO users (user_id, username, total_clicks, available_clicks, 
-                                      click_power, max_clicks, regen_rate, last_update, created_at,
-                                      click_upgrade_level, storage_upgrade_level, speed_upgrade_level)
-                    VALUES (%s, %s, 0, 100, 1, 100, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0, 0, 0)
-                    RETURNING *
-                    """, (user_id, username))
+                    try:
+                        cur.execute("""
+                        INSERT INTO users (user_id, username, total_clicks, available_clicks, 
+                                        click_power, max_clicks, regen_rate, last_update, created_at,
+                                        click_upgrade_level, storage_upgrade_level, speed_upgrade_level)
+                        VALUES (%s, %s, 0, 100, 1, 100, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0, 0, 0)
+                        RETURNING *
+                        """, (user_id, username))
+                    except psycopg2.Error as e:
+                        # Если ошибка связана с отсутствием колонок улучшений, используем базовый запрос
+                        if "column" in str(e) and any(col in str(e) for col in ["click_upgrade_level", "storage_upgrade_level", "speed_upgrade_level"]):
+                            app.logger.warning("Using basic INSERT query due to missing upgrade columns")
+                            cur.execute("""
+                            INSERT INTO users (user_id, username, total_clicks, available_clicks, 
+                                            click_power, max_clicks, regen_rate, last_update, created_at)
+                            VALUES (%s, %s, 0, 100, 1, 100, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                            RETURNING *
+                            """, (user_id, username))
+                        else:
+                            raise
+                    
                     user_data = cur.fetchone()
                 else:
                     # Если пользователь существует, обновляем его данные
@@ -197,24 +219,39 @@ def get_user():
                 
                 conn.commit()
                 
-                # Подготовка данных об уровнях улучшений и их стоимости
-                upgrade_levels = {
-                    'click': {
-                        'level': user_data['click_upgrade_level'],
-                        'cost': 200 * (2 ** user_data['click_upgrade_level']) if user_data['click_upgrade_level'] < 12 else None,
-                        'maxLevel': 12
-                    },
-                    'storage': {
-                        'level': user_data['storage_upgrade_level'],
-                        'cost': 200 * (2 ** user_data['storage_upgrade_level']) if user_data['storage_upgrade_level'] < 12 else None,
-                        'maxLevel': 12
-                    },
-                    'speed': {
-                        'level': user_data['speed_upgrade_level'],
-                        'cost': 2000 * (2 ** user_data['speed_upgrade_level']) if user_data['speed_upgrade_level'] < 12 else None,
-                        'maxLevel': 12
+                # Проверяем наличие полей улучшений у пользователя
+                upgrade_levels = {}
+                
+                # Получаем все уровни улучшений, с учетом того, что колонки могут отсутствовать
+                try:
+                    click_level = user_data.get('click_upgrade_level', 0) or 0
+                    storage_level = user_data.get('storage_upgrade_level', 0) or 0
+                    speed_level = user_data.get('speed_upgrade_level', 0) or 0
+                    
+                    upgrade_levels = {
+                        'click': {
+                            'level': click_level,
+                            'cost': 200 * (2 ** click_level) if click_level < 12 else None,
+                            'maxLevel': 12
+                        },
+                        'storage': {
+                            'level': storage_level,
+                            'cost': 200 * (2 ** storage_level) if storage_level < 12 else None,
+                            'maxLevel': 12
+                        },
+                        'speed': {
+                            'level': speed_level,
+                            'cost': 2000 * (2 ** speed_level) if speed_level < 12 else None,
+                            'maxLevel': 12
+                        }
                     }
-                }
+                except Exception as e:
+                    app.logger.warning(f"Error preparing upgrade levels: {str(e)}")
+                    upgrade_levels = {
+                        'click': {'level': 0, 'cost': 200, 'maxLevel': 12},
+                        'storage': {'level': 0, 'cost': 200, 'maxLevel': 12},
+                        'speed': {'level': 0, 'cost': 2000, 'maxLevel': 12}
+                    }
                 
                 return jsonify({
                     'totalClicks': user_data['total_clicks'],
@@ -288,28 +325,48 @@ def handle_upgrade():
         
         with get_db_connection() as conn:
             with conn.cursor(cursor_factory=DictCursor) as cur:
+                # Проверяем, существуют ли колонки для улучшений, и добавляем их при необходимости
+                for column in ['click_upgrade_level', 'storage_upgrade_level', 'speed_upgrade_level']:
+                    try:
+                        # Пробуем выбрать данные с этой колонкой
+                        cur.execute(f"SELECT {column} FROM users WHERE user_id = %s", (user_id,))
+                    except psycopg2.Error as e:
+                        if "column" in str(e) and column in str(e):
+                            # Если колонка не существует, добавляем ее
+                            app.logger.info(f"Adding {column} column to users table")
+                            cur.execute(f"ALTER TABLE users ADD COLUMN {column} INTEGER DEFAULT 0")
+                            conn.commit()
+                
                 # Получаем текущие данные пользователя
-                cur.execute("""
-                SELECT total_clicks, click_upgrade_level, storage_upgrade_level, speed_upgrade_level
-                FROM users
-                WHERE user_id = %s
-                """, (user_id,))
+                try:
+                    cur.execute("""
+                    SELECT total_clicks, click_upgrade_level, storage_upgrade_level, speed_upgrade_level
+                    FROM users
+                    WHERE user_id = %s
+                    """, (user_id,))
+                except psycopg2.Error:
+                    # Если не удалось выбрать все колонки вместе, используем более простой запрос
+                    cur.execute("SELECT total_clicks FROM users WHERE user_id = %s", (user_id,))
                 
                 user_data = cur.fetchone()
                 if not user_data:
                     return jsonify({'error': 'User not found'}), 404
                 
+                # Получаем текущие уровни улучшений, используя значения по умолчанию, если колонки нет
+                click_level = user_data.get('click_upgrade_level', 0) or 0
+                storage_level = user_data.get('storage_upgrade_level', 0) or 0
+                speed_level = user_data.get('speed_upgrade_level', 0) or 0
+                
                 # Рассчитываем стоимость и значение улучшения в зависимости от типа
                 if upgrade_type == 'click':
-                    level = user_data['click_upgrade_level']
-                    next_level = level + 1
+                    next_level = click_level + 1
                     
                     # Максимальный уровень улучшения
                     if next_level > 12:
                         return jsonify({'error': 'Maximum upgrade level reached'}), 400
                     
                     # Стоимость улучшения (200 * 2^level)
-                    cost = 200 * (2 ** level)
+                    cost = 200 * (2 ** click_level)
                     
                     # Проверка, достаточно ли денег у пользователя
                     if user_data['total_clicks'] < cost:
@@ -329,27 +386,41 @@ def handle_upgrade():
                         click_bonus = 1 + (next_level - 4)
                     
                     # Обновляем данные пользователя
-                    cur.execute("""
-                    UPDATE users 
-                    SET 
-                        total_clicks = total_clicks - %s,
-                        click_power = click_power + %s,
-                        click_upgrade_level = %s,
-                        last_update = CURRENT_TIMESTAMP
-                    WHERE user_id = %s
-                    RETURNING *
-                    """, (cost, click_bonus, next_level, user_id))
+                    try:
+                        cur.execute("""
+                        UPDATE users 
+                        SET 
+                            total_clicks = total_clicks - %s,
+                            click_power = click_power + %s,
+                            click_upgrade_level = %s,
+                            last_update = CURRENT_TIMESTAMP
+                        WHERE user_id = %s
+                        RETURNING *
+                        """, (cost, click_bonus, next_level, user_id))
+                    except psycopg2.Error as e:
+                        if "column" in str(e) and "click_upgrade_level" in str(e):
+                            # Если колонки нет, обновляем только основные данные
+                            cur.execute("""
+                            UPDATE users 
+                            SET 
+                                total_clicks = total_clicks - %s,
+                                click_power = click_power + %s,
+                                last_update = CURRENT_TIMESTAMP
+                            WHERE user_id = %s
+                            RETURNING *
+                            """, (cost, click_bonus, user_id))
+                        else:
+                            raise
                 
                 elif upgrade_type == 'storage':
-                    level = user_data['storage_upgrade_level']
-                    next_level = level + 1
+                    next_level = storage_level + 1
                     
                     # Максимальный уровень улучшения
                     if next_level > 12:
                         return jsonify({'error': 'Maximum upgrade level reached'}), 400
                     
                     # Стоимость улучшения (200 * 2^level)
-                    cost = 200 * (2 ** level)
+                    cost = 200 * (2 ** storage_level)
                     
                     # Проверка, достаточно ли денег у пользователя
                     if user_data['total_clicks'] < cost:
@@ -367,28 +438,43 @@ def handle_upgrade():
                         storage_bonus = 20
                     
                     # Обновляем данные пользователя
-                    cur.execute("""
-                    UPDATE users 
-                    SET 
-                        total_clicks = total_clicks - %s,
-                        max_clicks = max_clicks + %s,
-                        available_clicks = available_clicks + %s,
-                        storage_upgrade_level = %s,
-                        last_update = CURRENT_TIMESTAMP
-                    WHERE user_id = %s
-                    RETURNING *
-                    """, (cost, storage_bonus, storage_bonus, next_level, user_id))
+                    try:
+                        cur.execute("""
+                        UPDATE users 
+                        SET 
+                            total_clicks = total_clicks - %s,
+                            max_clicks = max_clicks + %s,
+                            available_clicks = available_clicks + %s,
+                            storage_upgrade_level = %s,
+                            last_update = CURRENT_TIMESTAMP
+                        WHERE user_id = %s
+                        RETURNING *
+                        """, (cost, storage_bonus, storage_bonus, next_level, user_id))
+                    except psycopg2.Error as e:
+                        if "column" in str(e) and "storage_upgrade_level" in str(e):
+                            # Если колонки нет, обновляем только основные данные
+                            cur.execute("""
+                            UPDATE users 
+                            SET 
+                                total_clicks = total_clicks - %s,
+                                max_clicks = max_clicks + %s,
+                                available_clicks = available_clicks + %s,
+                                last_update = CURRENT_TIMESTAMP
+                            WHERE user_id = %s
+                            RETURNING *
+                            """, (cost, storage_bonus, storage_bonus, user_id))
+                        else:
+                            raise
                 
                 elif upgrade_type == 'speed':
-                    level = user_data['speed_upgrade_level']
-                    next_level = level + 1
+                    next_level = speed_level + 1
                     
                     # Максимальный уровень улучшения
                     if next_level > 12:
                         return jsonify({'error': 'Maximum upgrade level reached'}), 400
                     
                     # Стоимость улучшения (2000 * 2^level)
-                    cost = 2000 * (2 ** level)
+                    cost = 2000 * (2 ** speed_level)
                     
                     # Проверка, достаточно ли денег у пользователя
                     if user_data['total_clicks'] < cost:
@@ -398,35 +484,58 @@ def handle_upgrade():
                     speed_bonus = 0.05
                     
                     # Обновляем данные пользователя
-                    cur.execute("""
-                    UPDATE users 
-                    SET 
-                        total_clicks = total_clicks - %s,
-                        regen_rate = regen_rate + %s,
-                        speed_upgrade_level = %s,
-                        last_update = CURRENT_TIMESTAMP
-                    WHERE user_id = %s
-                    RETURNING *
-                    """, (cost, speed_bonus, next_level, user_id))
+                    try:
+                        cur.execute("""
+                        UPDATE users 
+                        SET 
+                            total_clicks = total_clicks - %s,
+                            regen_rate = regen_rate + %s,
+                            speed_upgrade_level = %s,
+                            last_update = CURRENT_TIMESTAMP
+                        WHERE user_id = %s
+                        RETURNING *
+                        """, (cost, speed_bonus, next_level, user_id))
+                    except psycopg2.Error as e:
+                        if "column" in str(e) and "speed_upgrade_level" in str(e):
+                            # Если колонки нет, обновляем только основные данные
+                            cur.execute("""
+                            UPDATE users 
+                            SET 
+                                total_clicks = total_clicks - %s,
+                                regen_rate = regen_rate + %s,
+                                last_update = CURRENT_TIMESTAMP
+                            WHERE user_id = %s
+                            RETURNING *
+                            """, (cost, speed_bonus, user_id))
+                        else:
+                            raise
                 
                 updated_data = cur.fetchone()
                 conn.commit()
                 
+                # Обновляем уровни улучшений на основе переданных данных
+                if upgrade_type == 'click':
+                    click_level = next_level
+                elif upgrade_type == 'storage':
+                    storage_level = next_level
+                elif upgrade_type == 'speed':
+                    speed_level = next_level
+                
                 # Подготовка данных для ответа, включая информацию о стоимости следующего улучшения
                 next_level_data = {
                     'click': {
-                        'level': updated_data['click_upgrade_level'],
-                        'cost': 200 * (2 ** updated_data['click_upgrade_level']) if updated_data['click_upgrade_level'] < 12 else None,
+                        'level': click_level,
+                        'cost': 200 * (2 ** click_level) if click_level < 12 else None,
                         'maxLevel': 12
                     },
                     'storage': {
-                        'level': updated_data['storage_upgrade_level'],
-                        'cost': 200 * (2 ** updated_data['storage_upgrade_level']) if updated_data['storage_upgrade_level'] < 12 else None,
+                        'level': storage_level,
+                        'cost': 200 * (2 ** storage_level) if storage_level < 12 else None,
                         'maxLevel': 12
                     },
                     'speed': {
-                        'level': updated_data['speed_upgrade_level'],
-                        'cost': 2000 * (2 ** updated_data['speed_upgrade_level']) if updated_data['speed_upgrade_level'] < 12 else None,
+                        'level': speed_level,
+                        'cost': 2000 * (2 ** speed_level) if speed_level < 12 else None,
                         'maxLevel': 12
                     }
                 }
