@@ -2865,15 +2865,17 @@
         async function loadTasks() {
             try {
                 const response = await fetch('/api/tasks');
-                const tasks = await response.json();
+                if (!response.ok) {
+                    throw new Error('Failed to load tasks');
+                }
                 
-                const tasksContainer = document.getElementById('tasks-container');
+                const tasks = await response.json();
+                const tasksContainer = document.getElementById('tasksList');
                 tasksContainer.innerHTML = '';
                 
                 tasks.forEach(task => {
                     const taskCard = document.createElement('div');
                     taskCard.className = 'task-card';
-                    taskCard.id = `task${task.id}`;
                     
                     taskCard.innerHTML = `
                         <div class="task-header">
@@ -2884,7 +2886,7 @@
                             <a href="${task.channel_link}" target="_blank" class="task-join-btn">
                                 <i class="fas fa-external-link-alt"></i> Присоединиться
                             </a>
-                            <button onclick="checkChannelSubscription(${task.id}, '${task.channel_id}')" class="task-check-btn">
+                            <button class="task-check-btn" onclick="checkSubscription('${task.channel_id}')">
                                 <i class="fas fa-check"></i> Проверить
                             </button>
                         </div>
@@ -2898,6 +2900,7 @@
             }
         }
 
+        // Функция для проверки подписки
         async function checkSubscription(channelId) {
             try {
                 const response = await fetch('/api/tasks/check-subscription', {
@@ -2906,26 +2909,30 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        user_id: appState.userId,
+                        user_id: userId,
                         channel_id: channelId
                     })
                 });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to check subscription');
+                }
                 
                 const data = await response.json();
                 
                 if (data.success) {
                     if (data.is_subscribed) {
-                        alert('Поздравляем! Вы успешно подписались на канал и получили награду!');
-                        loadBalance(); // Обновляем баланс
+                        showNotification(`Поздравляем! Вы получили ${data.reward} $DGR!`);
+                        loadUserData(); // Обновляем баланс
                     } else {
-                        alert('Вы еще не подписались на канал. Пожалуйста, подпишитесь и попробуйте снова.');
+                        showNotification('Вы еще не подписались на канал. Пожалуйста, подпишитесь и попробуйте снова.');
                     }
                 } else {
-                    alert('Ошибка при проверке подписки: ' + data.error);
+                    showNotification('Ошибка при проверке подписки');
                 }
             } catch (error) {
                 console.error('Error checking subscription:', error);
-                alert('Произошла ошибка при проверке подписки');
+                showNotification('Произошла ошибка при проверке подписки');
             }
         }
 
