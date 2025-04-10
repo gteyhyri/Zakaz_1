@@ -1,26 +1,13 @@
+# Конфигурация заданий
 TASKS = [
+
     {
         "id": 1,
-        "title": "ДЕНЬГИ В TONE ",
-        "reward": 500,
+        "title": "ДЕНЬГИ В  TONE",
         "channel_id": "-1002435743499",
-        "channel_link": "t.me/moneyiston"
-    },
-   # {
-   #      "id": 2,
-   #     "title": "",
-   #     "reward": 500,
-   #     "channel_id": "-1002050956587",
-   #     "channel_link": "https://t.me/cryptonews"
-    #},
-    # Добавьте новые задания по аналогии
-    # {
-    #     "id": 3,
-    #     "title": "Название задания",
-    #     "reward": 500,
-    #     "channel_id": "ID_канала",
-    #     "channel_link": "ссылка_на_канал"
-    # }
+        "channel_link": "t.me/moneyiston",
+        "reward": 500
+    }
 ]
 
 # Функция для получения задания по ID
