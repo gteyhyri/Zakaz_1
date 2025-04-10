@@ -1107,7 +1107,7 @@ def get_tasks():
         }), 500
 
 @app.route('/api/tasks/check-subscription', methods=['POST'])
-def check_subscription():
+def check_task_subscription():
     try:
         data = request.get_json()
         user_id = data.get('user_id')
