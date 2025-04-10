@@ -1096,15 +1096,20 @@ def get_user_tasks():
 @app.route('/api/tasks', methods=['GET'])
 def get_tasks():
     try:
-        return jsonify({
-            'success': True,
-            'tasks': TASKS
-        })
+        # Список с одним заданием для канала "ДЕНЬГИ В ТОНЕ"
+        tasks = [
+            {
+                'id': 1,
+                'title': 'Подпишитесь на канал ДЕНЬГИ В ТОНЕ',
+                'channel_id': '-1002435743499',
+                'channel_link': 'https://t.me/moneyiston',
+                'reward': 500
+            }
+        ]
+        return jsonify(tasks)
     except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        print(f"Error getting tasks: {str(e)}")
+        return jsonify({'error': 'Failed to load tasks'}), 500
 
 @app.route('/api/tasks/check-subscription', methods=['POST'])
 def check_task_subscription():
@@ -1119,29 +1124,42 @@ def check_task_subscription():
                 'error': 'Missing required parameters'
             }), 400
             
-        # Здесь должна быть логика проверки подписки через Telegram Bot API
-        # Для примера, мы просто возвращаем случайный результат
+        # Здесь должна быть реальная проверка подписки через Telegram API
+        # Для примера используем случайный результат
         is_subscribed = random.choice([True, False])
         
         if is_subscribed:
             # Начисляем награду пользователю
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute('UPDATE users SET balance = balance + ? WHERE user_id = ?',
-                         (TASKS[channel_id]['reward'], user_id))
+            
+            # Получаем награду за задание
+            task_reward = 1000  # Это значение должно соответствовать награде в списке заданий
+            
+            # Обновляем баланс пользователя
+            cursor.execute('''
+                UPDATE users 
+                SET balance = balance + ? 
+                WHERE user_id = ?
+            ''', (task_reward, user_id))
+            
             conn.commit()
             conn.close()
             
-        return jsonify({
-            'success': True,
-            'is_subscribed': is_subscribed
-        })
-        
+            return jsonify({
+                'success': True,
+                'is_subscribed': True,
+                'reward': task_reward
+            })
+        else:
+            return jsonify({
+                'success': True,
+                'is_subscribed': False
+            })
+            
     except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        print(f"Error checking subscription: {str(e)}")
+        return jsonify({'error': 'Failed to check subscription'}), 500
 
 # Инициализация базы данных при запуске
 init_db()
