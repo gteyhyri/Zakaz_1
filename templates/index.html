@@ -1771,6 +1771,22 @@
         </div>
     </div>
     
+    <div class="buttons-section">
+        <button id="clickButton" class="click-button">
+            <img src="/static/clicker.png" alt="Click" class="clicker-image">
+        </button>
+        <div class="stats-container">
+            <div class="stat-item">
+                <span class="stat-label">Клики:</span>
+                <span id="clickCount" class="stat-value">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Доступно:</span>
+                <span id="availableClicks" class="stat-value">100</span>
+            </div>
+        </div>
+    </div>
+    
     <script>
         // Инициализация Telegram WebApp
         const tg = window.Telegram.WebApp;
