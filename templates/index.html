@@ -1181,6 +1181,287 @@
             font-weight: 600;
             text-align: center;
         }
+
+        /* Стили для страницы заданий */
+        .tasks-container {
+            width: 100%;
+            max-width: 320px;
+            background-color: var(--white);
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .tasks-title {
+            color: var(--dark-blue);
+            margin-bottom: 4px;
+            font-size: 22px;
+            font-weight: 700;
+            text-align: center;
+        }
+        
+        .tasks-description {
+            color: var(--dark-gray);
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+        
+        .task-card {
+            background-color: var(--light-blue);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: var(--transition);
+            border: 1px solid rgba(42, 127, 255, 0.1);
+        }
+        
+        .task-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(42, 127, 255, 0.15);
+        }
+        
+        .task-card.completed {
+            background-color: rgba(40, 167, 69, 0.1);
+            border-color: rgba(40, 167, 69, 0.2);
+        }
+        
+        .task-card.completed .task-title {
+            color: #28a745;
+        }
+        
+        .task-card.completed .task-reward {
+            color: #28a745;
+        }
+        
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .task-title {
+            color: var(--dark-blue);
+            font-size: 16px;
+            font-weight: 600;
+            flex: 1;
+        }
+        
+        .task-reward {
+            color: var(--primary-blue);
+            font-weight: 600;
+            font-size: 14px;
+            white-space: nowrap;
+            margin-left: 12px;
+        }
+        
+        .task-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .task-join-btn {
+            background-color: var(--primary-blue);
+            color: var(--white);
+            border: none;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .task-join-btn:hover {
+            background-color: var(--dark-blue);
+            transform: translateY(-2px);
+        }
+        
+        .task-join-btn.completed {
+            background-color: #28a745;
+            cursor: not-allowed;
+        }
+        
+        .task-check-btn {
+            background-color: var(--white);
+            color: var(--primary-blue);
+            border: 1px solid var(--primary-blue);
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .task-check-btn:hover {
+            background-color: var(--light-blue);
+        }
+        
+        .task-check-btn.completed {
+            background-color: #28a745;
+            color: var(--white);
+            border-color: #28a745;
+            cursor: not-allowed;
+        }
+        
+        .task-check-btn.loading {
+            background-color: var(--dark-gray);
+            color: var(--white);
+            border-color: var(--dark-gray);
+            cursor: wait;
+        }
+        
+        .task-check-btn i {
+            font-size: 16px;
+        }
+
+        /* Стили для заданий */
+        .task-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .task-content {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .task-content h3 {
+            margin: 0;
+            color: #fff;
+            font-size: 18px;
+        }
+
+        .task-content p {
+            margin: 0;
+            color: #fff;
+            opacity: 0.8;
+        }
+
+        .channel-link {
+            display: inline-block;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: background 0.3s;
+        }
+
+        .channel-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .check-subscription {
+            padding: 8px 16px;
+            background: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .check-subscription:hover {
+            background: #45a049;
+        }
+
+        .task-completed {
+            display: inline-block;
+            padding: 8px 16px;
+            background: rgba(76, 175, 80, 0.2);
+            color: #4CAF50;
+            border-radius: 8px;
+        }
+
+        .tasks-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+        }
+
+        .tasks-section h2 {
+            color: #fff;
+            margin-bottom: 20px;
+            font-size: 24px;
+            text-align: center;
+        }
+
+        .task-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: transform 0.2s;
+        }
+
+        .task-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .task-content h3 {
+            color: #fff;
+            margin: 0 0 10px 0;
+            font-size: 18px;
+        }
+
+        .task-content p {
+            color: rgba(255, 255, 255, 0.8);
+            margin: 5px 0;
+        }
+
+        .channel-link {
+            display: inline-block;
+            background: #2196F3;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            margin: 10px 0;
+            transition: background 0.2s;
+        }
+
+        .channel-link:hover {
+            background: #1976D2;
+        }
+
+        .check-subscription {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .check-subscription:hover {
+            background: #388E3C;
+        }
+
+        .check-subscription:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -1362,8 +1643,45 @@
     </div>
     
     <div class="page" id="tasksPage">
-        <div class="soon-page">
-            Скоро...
+        <div class="tasks-container">
+            <h2 class="tasks-title">Задания</h2>
+            <p class="tasks-description">Выполняйте задания и получайте награды в $DGR</p>
+            
+            <div class="task-card" id="task1">
+                <div class="task-header">
+                    <span class="task-title">Подпишитесь на канал Elite Clicker</span>
+                    <span class="task-reward">+500 $DGR</span>
+                </div>
+                <div class="task-actions">
+                    <a href="https://t.me/eliteclicker" target="_blank" class="task-join-btn" id="task1Join">
+                        <i class="fab fa-telegram"></i>
+                        Присоединиться
+                    </a>
+                    <button class="task-check-btn" id="task1Check">
+                        <i class="fas fa-check"></i>
+                        Проверить
+                    </button>
+                </div>
+            </div>
+            
+            <div class="task-card" id="task2">
+                <div class="task-header">
+                    <span class="task-title">Подпишитесь на канал Crypto News</span>
+                    <span class="task-reward">+500 $DGR</span>
+                </div>
+                <div class="task-actions">
+                    <a href="https://t.me/cryptonews" target="_blank" class="task-join-btn" id="task2Join">
+                        <i class="fab fa-telegram"></i>
+                        Присоединиться
+                    </a>
+                    <button class="task-check-btn" id="task2Check">
+                        <i class="fas fa-check"></i>
+                        Проверить
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Добавьте больше заданий по аналогии -->
         </div>
     </div>
     
@@ -1477,6 +1795,13 @@
     </div>
     
     <div class="notification" id="notification"></div>
+    
+    <div class="tasks-section">
+        <h2>Задания</h2>
+        <div id="tasks-container">
+            <!-- Tasks will be loaded here dynamically -->
+        </div>
+    </div>
     
     <script>
         // Инициализация Telegram WebApp
@@ -2522,6 +2847,120 @@
         elements.speedUpgradeBtn.addEventListener('click', () => {
             purchaseUpgrade('speed');
         });
+
+        // Функция для проверки подписки на канал
+        async function checkChannelSubscription(channelId, taskId) {
+            const checkBtn = document.getElementById(`task${taskId}Check`);
+            const joinBtn = document.getElementById(`task${taskId}Join`);
+            const taskCard = document.getElementById(`task${taskId}`);
+            
+            try {
+                // Показываем индикатор загрузки
+                checkBtn.classList.add('loading');
+                checkBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Проверка...';
+                
+                const response = await fetch('/api/user/check-subscription', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Telegram-Init-Data': tg.initData || ''
+                    },
+                    body: JSON.stringify({ 
+                        userId,
+                        channelId
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to check subscription');
+                }
+                
+                const data = await response.json();
+                
+                if (data.isSubscribed) {
+                    // Пользователь подписан
+                    taskCard.classList.add('completed');
+                    checkBtn.classList.add('completed');
+                    checkBtn.innerHTML = '<i class="fas fa-check"></i> Выполнено';
+                    checkBtn.disabled = true;
+                    joinBtn.classList.add('completed');
+                    joinBtn.style.pointerEvents = 'none';
+                    
+                    // Обновляем баланс
+                    appState.totalClicks += 500;
+                    updateUI();
+                    
+                    showNotification('Награда получена: +500 $DGR');
+                } else {
+                    // Пользователь не подписан
+                    showNotification('Вы не подписаны на канал');
+                }
+                
+            } catch (error) {
+                console.error('Error checking subscription:', error);
+                showNotification('Ошибка при проверке подписки');
+            } finally {
+                checkBtn.classList.remove('loading');
+                checkBtn.innerHTML = '<i class="fas fa-check"></i> Проверить';
+            }
+        }
+        
+        // Добавьте обработчики для кнопок проверки
+        document.getElementById('task1Check').addEventListener('click', () => {
+            checkChannelSubscription('-1002050956586', 1);
+        });
+        
+        document.getElementById('task2Check').addEventListener('click', () => {
+            checkChannelSubscription('-1002050956587', 2);
+        });
+
+        // Функция для загрузки заданий
+        async function loadTasks() {
+            try {
+                const response = await fetch('/api/tasks');
+                const tasks = await response.json();
+                const tasksContainer = document.getElementById('tasks-container');
+                tasksContainer.innerHTML = '';
+
+                tasks.forEach(task => {
+                    const taskElement = document.createElement('div');
+                    taskElement.className = 'task-item';
+                    taskElement.innerHTML = `
+                        <h3>${task.title}</h3>
+                        <p>${task.description}</p>
+                        <p>Награда: ${task.reward} $DGR</p>
+                        <a href="${task.channel_link}" class="channel-link" target="_blank">Перейти в канал</a>
+                        <button class="check-subscription" onclick="checkSubscription(${task.id})">Проверить подписку</button>
+                    `;
+                    tasksContainer.appendChild(taskElement);
+                });
+            } catch (error) {
+                console.error('Ошибка при загрузке заданий:', error);
+            }
+        }
+
+        // Функция для проверки подписки
+        async function checkSubscription(taskId) {
+            try {
+                const response = await fetch(`/api/tasks/${taskId}/check`, {
+                    method: 'POST'
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('Подписка подтверждена! Награда начислена на ваш баланс.');
+                    loadTasks(); // Обновляем список заданий
+                } else {
+                    alert('Вы еще не подписаны на канал. Пожалуйста, подпишитесь и попробуйте снова.');
+                }
+            } catch (error) {
+                console.error('Ошибка при проверке подписки:', error);
+                alert('Произошла ошибка при проверке подписки. Пожалуйста, попробуйте позже.');
+            }
+        }
+
+        // Загружаем задания при загрузке страницы
+        document.addEventListener('DOMContentLoaded', loadTasks);
     </script>
 </body>
 </html>
