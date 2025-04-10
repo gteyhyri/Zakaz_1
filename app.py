@@ -6,6 +6,9 @@ import logging
 from logging.handlers import RotatingFileHandler
 from flask_cors import CORS
 from datetime import datetime, timedelta
+import sqlite3
+import json
+from tasks_config import get_task_by_id, get_all_tasks
 
 app = Flask(__name__, static_folder='static')
 CORS(app)
@@ -141,6 +144,13 @@ def init_db():
             FOREIGN KEY (referred_id) REFERENCES users(user_id)
         )
         """)
+        
+        # Создаем таблицу выполненных заданий
+        cur.execute('''CREATE TABLE IF NOT EXISTS completed_tasks
+                     (user_id INTEGER,
+                      task_id INTEGER,
+                      completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                      PRIMARY KEY (user_id, task_id))''')
         
         conn.commit()
         app.logger.info("Database initialized successfully")
@@ -994,6 +1004,96 @@ def health_check():
         return jsonify({'status': 'ok', 'database': 'connected'})
     except Exception as e:
         return jsonify({'status': 'error', 'database': str(e)}), 500
+
+@app.route('/api/user/check-subscription', methods=['POST'])
+def check_subscription():
+    try:
+        data = request.get_json()
+        user_id = data.get('userId')
+        channel_id = data.get('channelId')
+        
+        if not user_id or not channel_id:
+            return jsonify({'error': 'Missing required parameters'}), 400
+        
+        # Получаем информацию о задании
+        task = get_task_by_id(int(channel_id))
+        if not task:
+            return jsonify({'error': 'Task not found'}), 404
+        
+        # Проверяем, не выполнено ли задание уже
+        conn = sqlite3.connect('users.db')
+        c = conn.cursor()
+        c.execute('SELECT * FROM completed_tasks WHERE user_id = ? AND task_id = ?',
+                 (user_id, task['id']))
+        if c.fetchone():
+            return jsonify({'error': 'Task already completed'}), 400
+        
+        # Проверяем подписку
+        is_subscribed = check_channel_subscription(user_id, channel_id)
+        
+        if is_subscribed:
+            # Добавляем запись о выполнении задания
+            c.execute('INSERT INTO completed_tasks (user_id, task_id) VALUES (?, ?)',
+                     (user_id, task['id']))
+            
+            # Начисляем награду
+            c.execute('UPDATE users SET total_clicks = total_clicks + ? WHERE user_id = ?',
+                     (task['reward'], user_id))
+            
+            conn.commit()
+            conn.close()
+            
+            return jsonify({
+                'isSubscribed': True,
+                'reward': task['reward']
+            })
+        else:
+            conn.close()
+            return jsonify({
+                'isSubscribed': False
+            })
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/user/tasks', methods=['POST'])
+def get_user_tasks():
+    try:
+        data = request.get_json()
+        user_id = data.get('userId')
+        
+        if not user_id:
+            return jsonify({'error': 'Missing user ID'}), 400
+        
+        # Получаем все задания
+        tasks = get_all_tasks()
+        
+        # Получаем выполненные задания пользователя
+        conn = sqlite3.connect('users.db')
+        c = conn.cursor()
+        c.execute('SELECT task_id FROM completed_tasks WHERE user_id = ?', (user_id,))
+        completed_tasks = {row[0] for row in c.fetchall()}
+        conn.close()
+        
+        # Формируем ответ с информацией о выполнении
+        tasks_info = []
+        for task in tasks:
+            tasks_info.append({
+                'id': task['id'],
+                'title': task['title'],
+                'reward': task['reward'],
+                'channel_id': task['channel_id'],
+                'channel_link': task['channel_link'],
+                'completed': task['id'] in completed_tasks
+            })
+        
+        return jsonify({'tasks': tasks_info})
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# Инициализация базы данных при запуске
+init_db()
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
