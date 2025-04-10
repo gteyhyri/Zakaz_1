@@ -1647,41 +1647,9 @@
             <h2 class="tasks-title">Задания</h2>
             <p class="tasks-description">Выполняйте задания и получайте награды в $DGR</p>
             
-            <div class="task-card" id="task1">
-                <div class="task-header">
-                    <span class="task-title">Подпишитесь на канал Elite Clicker</span>
-                    <span class="task-reward">+500 $DGR</span>
-                </div>
-                <div class="task-actions">
-                    <a href="https://t.me/eliteclicker" target="_blank" class="task-join-btn" id="task1Join">
-                        <i class="fab fa-telegram"></i>
-                        Присоединиться
-                    </a>
-                    <button class="task-check-btn" id="task1Check">
-                        <i class="fas fa-check"></i>
-                        Проверить
-                    </button>
-                </div>
+            <div id="tasksList">
+                <!-- Tasks will be loaded here dynamically -->
             </div>
-            
-            <div class="task-card" id="task2">
-                <div class="task-header">
-                    <span class="task-title">Подпишитесь на канал Crypto News</span>
-                    <span class="task-reward">+500 $DGR</span>
-                </div>
-                <div class="task-actions">
-                    <a href="https://t.me/cryptonews" target="_blank" class="task-join-btn" id="task2Join">
-                        <i class="fab fa-telegram"></i>
-                        Присоединиться
-                    </a>
-                    <button class="task-check-btn" id="task2Check">
-                        <i class="fas fa-check"></i>
-                        Проверить
-                    </button>
-                </div>
-            </div>
-            
-            <!-- Добавьте больше заданий по аналогии -->
         </div>
     </div>
     
@@ -2665,6 +2633,9 @@
                 initMusic();
                 await loadUserData();
                 
+                // Загружаем задания
+                await loadTasks();
+                
                 // Загружаем реферальную статистику
                 await loadReferralStats();
                 
@@ -2914,53 +2885,72 @@
             checkChannelSubscription('-1002050956587', 2);
         });
 
-        // Функция для загрузки заданий
+        // Функция для загрузки и отображения заданий
         async function loadTasks() {
             try {
                 const response = await fetch('/api/tasks');
-                const tasks = await response.json();
-                const tasksContainer = document.getElementById('tasks-container');
-                tasksContainer.innerHTML = '';
-
-                tasks.forEach(task => {
-                    const taskElement = document.createElement('div');
-                    taskElement.className = 'task-item';
-                    taskElement.innerHTML = `
-                        <h3>${task.title}</h3>
-                        <p>${task.description}</p>
-                        <p>Награда: ${task.reward} $DGR</p>
-                        <a href="${task.channel_link}" class="channel-link" target="_blank">Перейти в канал</a>
-                        <button class="check-subscription" onclick="checkSubscription(${task.id})">Проверить подписку</button>
-                    `;
-                    tasksContainer.appendChild(taskElement);
-                });
-            } catch (error) {
-                console.error('Ошибка при загрузке заданий:', error);
-            }
-        }
-
-        // Функция для проверки подписки
-        async function checkSubscription(taskId) {
-            try {
-                const response = await fetch(`/api/tasks/${taskId}/check`, {
-                    method: 'POST'
-                });
-                const result = await response.json();
+                const data = await response.json();
                 
-                if (result.success) {
-                    alert('Подписка подтверждена! Награда начислена на ваш баланс.');
-                    loadTasks(); // Обновляем список заданий
+                if (data.success) {
+                    const tasksContainer = document.getElementById('tasks-container');
+                    tasksContainer.innerHTML = '';
+                    
+                    data.tasks.forEach(task => {
+                        const taskElement = document.createElement('div');
+                        taskElement.className = 'task-item';
+                        taskElement.innerHTML = `
+                            <h3>${task.title}</h3>
+                            <p>Награда: ${task.reward} $DGR</p>
+                            <a href="${task.channel_link}" target="_blank" class="task-button">Подписаться</a>
+                            <button onclick="checkSubscription('${task.channel_id}')" class="task-button">Проверить подписку</button>
+                        `;
+                        tasksContainer.appendChild(taskElement);
+                    });
                 } else {
-                    alert('Вы еще не подписаны на канал. Пожалуйста, подпишитесь и попробуйте снова.');
+                    console.error('Failed to load tasks:', data.error);
                 }
             } catch (error) {
-                console.error('Ошибка при проверке подписки:', error);
-                alert('Произошла ошибка при проверке подписки. Пожалуйста, попробуйте позже.');
+                console.error('Error loading tasks:', error);
             }
         }
 
-        // Загружаем задания при загрузке страницы
-        document.addEventListener('DOMContentLoaded', loadTasks);
+        async function checkSubscription(channelId) {
+            try {
+                const response = await fetch('/api/tasks/check-subscription', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        user_id: appState.userId,
+                        channel_id: channelId
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    if (data.is_subscribed) {
+                        alert('Поздравляем! Вы успешно подписались на канал и получили награду!');
+                        loadBalance(); // Обновляем баланс
+                    } else {
+                        alert('Вы еще не подписались на канал. Пожалуйста, подпишитесь и попробуйте снова.');
+                    }
+                } else {
+                    alert('Ошибка при проверке подписки: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error checking subscription:', error);
+                alert('Произошла ошибка при проверке подписки');
+            }
+        }
+
+        // Load tasks when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTasks();
+        });
+
+        // ... existing code ...
     </script>
 </body>
 </html>
