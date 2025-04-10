@@ -8,7 +8,8 @@ from flask_cors import CORS
 from datetime import datetime, timedelta
 import sqlite3
 import json
-from tasks_config import get_task_by_id, get_all_tasks
+from tasks_config import get_task_by_id, get_all_tasks, TASKS
+import random
 
 app = Flask(__name__, static_folder='static')
 CORS(app)
@@ -1091,6 +1092,56 @@ def get_user_tasks():
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/tasks', methods=['GET'])
+def get_tasks():
+    try:
+        return jsonify({
+            'success': True,
+            'tasks': TASKS
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/tasks/check-subscription', methods=['POST'])
+def check_subscription():
+    try:
+        data = request.get_json()
+        user_id = data.get('user_id')
+        channel_id = data.get('channel_id')
+        
+        if not user_id or not channel_id:
+            return jsonify({
+                'success': False,
+                'error': 'Missing required parameters'
+            }), 400
+            
+        # Здесь должна быть логика проверки подписки через Telegram Bot API
+        # Для примера, мы просто возвращаем случайный результат
+        is_subscribed = random.choice([True, False])
+        
+        if is_subscribed:
+            # Начисляем награду пользователю
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute('UPDATE users SET balance = balance + ? WHERE user_id = ?',
+                         (TASKS[channel_id]['reward'], user_id))
+            conn.commit()
+            conn.close()
+            
+        return jsonify({
+            'success': True,
+            'is_subscribed': is_subscribed
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 # Инициализация базы данных при запуске
 init_db()
