@@ -1393,94 +1393,42 @@
 
         .tasks-section {
             padding: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            margin: 20px;
-            display: none;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .tasks-section h2 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 24px;
         }
 
         .task-card {
-            background: rgba(255, 255, 255, 0.1);
+            background: var(--card-bg);
             border-radius: 12px;
             padding: 20px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
         }
 
         .task-title {
+            color: var(--text-color);
             font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 10px;
-            color: #fff;
+            margin: 0;
         }
 
         .task-reward {
-            font-size: 16px;
-            color: #4CAF50;
-            margin-bottom: 15px;
-        }
-
-        .task-button {
-            background: linear-gradient(45deg, #2196F3, #1976D2);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
+            color: var(--primary-color);
             font-weight: bold;
-            transition: all 0.3s ease;
-        }
-
-        .task-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        .task-button:disabled {
-            background: #666;
-            cursor: not-allowed;
-        }
-
-        .tasks-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .tasks-header h2 {
-            font-size: 24px;
-            color: #333;
-            margin-bottom: 10px;
-        }
-
-        .tasks-header p {
-            color: #666;
             font-size: 16px;
-        }
-
-        .tasks-list {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .task-item {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .task-item h3 {
-            font-size: 18px;
-            color: #333;
-            margin-bottom: 10px;
-        }
-
-        .task-reward {
-            color: #4CAF50;
-            font-weight: bold;
-            margin-bottom: 15px;
-            display: block;
         }
 
         .task-actions {
@@ -1488,28 +1436,40 @@
             gap: 10px;
         }
 
-        .task-button {
+        .task-join-btn, .task-check-btn {
             padding: 8px 16px;
             border-radius: 6px;
-            border: none;
+            font-size: 14px;
             cursor: pointer;
-            font-weight: 500;
-            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s ease;
         }
 
-        .task-button[href] {
-            background-color: #2196F3;
+        .task-join-btn {
+            background: var(--primary-color);
             color: white;
             text-decoration: none;
         }
 
-        .task-button[type="button"] {
-            background-color: #4CAF50;
-            color: white;
+        .task-join-btn:hover {
+            background: var(--primary-color-dark);
         }
 
-        .task-button:hover {
-            opacity: 0.9;
+        .task-check-btn {
+            background: var(--success-color);
+            color: white;
+            border: none;
+        }
+
+        .task-check-btn:hover {
+            background: var(--success-color-dark);
+        }
+
+        .task-check-btn:disabled {
+            background: var(--dark-gray);
+            cursor: not-allowed;
         }
     </style>
 </head>
@@ -2181,12 +2141,15 @@
                 elements.mainBtn.classList.add('active-nav');
             } else if (pageId === 'tasksPage') {
                 elements.tasksBtn.classList.add('active-nav');
+                loadTasks(); // Загружаем задания при переходе на страницу
             } else if (pageId === 'profilePage') {
                 elements.profileBtn.classList.add('active-nav');
             } else if (pageId === 'friendsPage') {
                 elements.friendsBtn.classList.add('active-nav');
+                updateReferralUI(); // Обновляем реферальный UI при переключении на страницу
             } else if (pageId === 'rankingPage') {
                 elements.rankingBtn.classList.add('active-nav');
+                loadRanking();
             }
             
             handleFirstInteraction();
@@ -2862,59 +2825,30 @@
         });
 
         // Функция для проверки подписки на канал
-        async function checkChannelSubscription(channelId, taskId) {
-            const checkBtn = document.getElementById(`task${taskId}Check`);
-            const joinBtn = document.getElementById(`task${taskId}Join`);
-            const taskCard = document.getElementById(`task${taskId}`);
-            
+        async function checkChannelSubscription(taskId, channelId) {
             try {
-                // Показываем индикатор загрузки
-                checkBtn.classList.add('loading');
-                checkBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Проверка...';
-                
-                const response = await fetch('/api/user/check-subscription', {
+                const response = await fetch('/api/tasks/check-subscription', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'Telegram-Init-Data': tg.initData || ''
+                        'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ 
-                        userId,
-                        channelId
+                    body: JSON.stringify({
+                        user_id: appState.userId,
+                        channel_id: channelId
                     })
                 });
-                
-                if (!response.ok) {
-                    throw new Error('Failed to check subscription');
-                }
-                
+
                 const data = await response.json();
                 
-                if (data.isSubscribed) {
-                    // Пользователь подписан
-                    taskCard.classList.add('completed');
-                    checkBtn.classList.add('completed');
-                    checkBtn.innerHTML = '<i class="fas fa-check"></i> Выполнено';
-                    checkBtn.disabled = true;
-                    joinBtn.classList.add('completed');
-                    joinBtn.style.pointerEvents = 'none';
-                    
-                    // Обновляем баланс
-                    appState.totalClicks += 500;
-                    updateUI();
-                    
-                    showNotification('Награда получена: +500 $DGR');
+                if (data.success) {
+                    showNotification('Подписка подтверждена! Награда начислена.', 'success');
+                    loadTasks(); // Обновляем список заданий
                 } else {
-                    // Пользователь не подписан
-                    showNotification('Вы не подписаны на канал');
+                    showNotification('Вы не подписаны на канал. Пожалуйста, подпишитесь и попробуйте снова.', 'error');
                 }
-                
             } catch (error) {
                 console.error('Error checking subscription:', error);
-                showNotification('Ошибка при проверке подписки');
-            } finally {
-                checkBtn.classList.remove('loading');
-                checkBtn.innerHTML = '<i class="fas fa-check"></i> Проверить';
+                showNotification('Ошибка при проверке подписки', 'error');
             }
         }
         
@@ -2930,54 +2864,37 @@
         // Функция для загрузки и отображения заданий
         async function loadTasks() {
             try {
-                const tasksList = document.getElementById('tasksList');
-                tasksList.innerHTML = '<div style="text-align: center; color: white;"><i class="fas fa-spinner fa-spin"></i> Загрузка заданий...</div>';
+                const response = await fetch('/api/tasks');
+                const tasks = await response.json();
                 
-                const response = await fetch('/api/tasks', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Telegram-Init-Data': tg.initData || ''
-                    },
-                    body: JSON.stringify({ userId })
+                const tasksContainer = document.getElementById('tasks-container');
+                tasksContainer.innerHTML = '';
+                
+                tasks.forEach(task => {
+                    const taskCard = document.createElement('div');
+                    taskCard.className = 'task-card';
+                    taskCard.id = `task${task.id}`;
+                    
+                    taskCard.innerHTML = `
+                        <div class="task-header">
+                            <h3 class="task-title">${task.title}</h3>
+                            <span class="task-reward">+${task.reward} $DGR</span>
+                        </div>
+                        <div class="task-actions">
+                            <a href="${task.channel_link}" target="_blank" class="task-join-btn">
+                                <i class="fas fa-external-link-alt"></i> Присоединиться
+                            </a>
+                            <button onclick="checkChannelSubscription(${task.id}, '${task.channel_id}')" class="task-check-btn">
+                                <i class="fas fa-check"></i> Проверить
+                            </button>
+                        </div>
+                    `;
+                    
+                    tasksContainer.appendChild(taskCard);
                 });
-                
-                if (!response.ok) {
-                    throw new Error('Failed to load tasks');
-                }
-                
-                const data = await response.json();
-                tasksList.innerHTML = '';
-                
-                if (data.tasks && data.tasks.length > 0) {
-                    data.tasks.forEach(task => {
-                        const taskCard = document.createElement('div');
-                        taskCard.className = 'task-card';
-                        taskCard.id = `task${task.id}`;
-                        
-                        taskCard.innerHTML = `
-                            <div class="task-header">
-                                <div class="task-title">${task.title}</div>
-                                <div class="task-reward">${task.reward} $DGR</div>
-                            </div>
-                            <div class="task-actions">
-                                <a href="https://t.me/${task.channel_link}" target="_blank" class="task-join-btn" id="task${task.id}Join">
-                                    <i class="fab fa-telegram"></i> Подписаться
-                                </a>
-                                <button class="task-check-btn" id="task${task.id}Check" onclick="checkChannelSubscription('${task.channel_id}', '${task.id}')">
-                                    <i class="fas fa-check"></i> Проверить
-                                </button>
-                            </div>
-                        `;
-                        
-                        tasksList.appendChild(taskCard);
-                    });
-                } else {
-                    tasksList.innerHTML = '<div style="text-align: center; color: white;">Нет доступных заданий</div>';
-                }
             } catch (error) {
                 console.error('Error loading tasks:', error);
-                tasksList.innerHTML = '<div style="text-align: center; color: white;">Ошибка загрузки заданий</div>';
+                showNotification('Ошибка при загрузке заданий', 'error');
             }
         }
 
