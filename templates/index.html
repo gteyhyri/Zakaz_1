@@ -1462,6 +1462,83 @@
             background: #666;
             cursor: not-allowed;
         }
+
+        .tasks-section {
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .tasks-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .tasks-header h2 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .tasks-header p {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .tasks-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .task-item {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .task-item h3 {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .task-reward {
+            color: #4CAF50;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .task-button {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+
+        .task-button[href] {
+            background-color: #2196F3;
+            color: white;
+            text-decoration: none;
+        }
+
+        .task-button[type="button"] {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .task-button:hover {
+            opacity: 0.9;
+        }
     </style>
 </head>
 <body>
@@ -1765,8 +1842,11 @@
     <div class="notification" id="notification"></div>
     
     <div class="tasks-section">
-        <h2>Задания</h2>
-        <div id="tasks-container">
+        <div class="tasks-header">
+            <h2>Задания</h2>
+            <p>Выполняйте задания и получайте награды в $DGR</p>
+        </div>
+        <div id="tasks-container" class="tasks-list">
             <!-- Tasks will be loaded here dynamically -->
         </div>
     </div>
@@ -2916,9 +2996,11 @@
                         taskElement.className = 'task-item';
                         taskElement.innerHTML = `
                             <h3>${task.title}</h3>
-                            <p>Награда: ${task.reward} $DGR</p>
-                            <a href="${task.channel_link}" target="_blank" class="task-button">Подписаться</a>
-                            <button onclick="checkSubscription('${task.channel_id}')" class="task-button">Проверить подписку</button>
+                            <span class="task-reward">Награда: ${task.reward} $DGR</span>
+                            <div class="task-actions">
+                                <a href="${task.channel_link}" target="_blank" class="task-button">Подписаться</a>
+                                <button onclick="checkSubscription('${task.channel_id}')" class="task-button">Проверить подписку</button>
+                            </div>
                         `;
                         tasksContainer.appendChild(taskElement);
                     });
@@ -2962,9 +3044,7 @@
         }
 
         // Load tasks when page loads
-        document.addEventListener('DOMContentLoaded', () => {
-            loadTasks();
-        });
+        document.addEventListener('DOMContentLoaded', loadTasks);
 
         // ... existing code ...
     </script>
