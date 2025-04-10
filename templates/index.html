@@ -2930,31 +2930,54 @@
         // Функция для загрузки и отображения заданий
         async function loadTasks() {
             try {
-                const response = await fetch('/api/tasks');
-                const data = await response.json();
+                const tasksList = document.getElementById('tasksList');
+                tasksList.innerHTML = '<div style="text-align: center; color: white;"><i class="fas fa-spinner fa-spin"></i> Загрузка заданий...</div>';
                 
-                if (data.success) {
-                    const tasksContainer = document.getElementById('tasks-container');
-                    tasksContainer.innerHTML = '';
-                    
+                const response = await fetch('/api/tasks', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Telegram-Init-Data': tg.initData || ''
+                    },
+                    body: JSON.stringify({ userId })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load tasks');
+                }
+                
+                const data = await response.json();
+                tasksList.innerHTML = '';
+                
+                if (data.tasks && data.tasks.length > 0) {
                     data.tasks.forEach(task => {
-                        const taskElement = document.createElement('div');
-                        taskElement.className = 'task-item';
-                        taskElement.innerHTML = `
-                            <h3>${task.title}</h3>
-                            <span class="task-reward">Награда: ${task.reward} $DGR</span>
+                        const taskCard = document.createElement('div');
+                        taskCard.className = 'task-card';
+                        taskCard.id = `task${task.id}`;
+                        
+                        taskCard.innerHTML = `
+                            <div class="task-header">
+                                <div class="task-title">${task.title}</div>
+                                <div class="task-reward">${task.reward} $DGR</div>
+                            </div>
                             <div class="task-actions">
-                                <a href="${task.channel_link}" target="_blank" class="task-button">Подписаться</a>
-                                <button onclick="checkSubscription('${task.channel_id}')" class="task-button">Проверить подписку</button>
+                                <a href="https://t.me/${task.channel_link}" target="_blank" class="task-join-btn" id="task${task.id}Join">
+                                    <i class="fab fa-telegram"></i> Подписаться
+                                </a>
+                                <button class="task-check-btn" id="task${task.id}Check" onclick="checkChannelSubscription('${task.channel_id}', '${task.id}')">
+                                    <i class="fas fa-check"></i> Проверить
+                                </button>
                             </div>
                         `;
-                        tasksContainer.appendChild(taskElement);
+                        
+                        tasksList.appendChild(taskCard);
                     });
                 } else {
-                    console.error('Failed to load tasks:', data.error);
+                    tasksList.innerHTML = '<div style="text-align: center; color: white;">Нет доступных заданий</div>';
                 }
             } catch (error) {
                 console.error('Error loading tasks:', error);
+                tasksList.innerHTML = '<div style="text-align: center; color: white;">Ошибка загрузки заданий</div>';
             }
         }
 
