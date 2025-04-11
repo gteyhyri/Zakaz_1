@@ -16,7 +16,7 @@ app = Flask(__name__, static_folder='static')
 CORS(app)
 
 # Инициализация бота Telegram
-bot = telebot.TeleBot('7615667336:AAGtPhj_aZdkptoXnOpF5DNvZBus9lIQCSk')
+bot = telebot.TeleBot('7600352334:AAGtCfbQw2nz6a7WvbX9nbVwW1cdQJIGKBk')
 
 # Функция для проверки подписки пользователя на канал
 def check_subscription(user_id, chat_id):
