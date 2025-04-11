@@ -1130,7 +1130,7 @@ def check_task_subscription():
             }), 400
             
         # Используем функцию проверки подписки через Telegram API
-        is_subscribed = check_subscription(user_id, channel_id)
+        is_subscribed = check_subscription(int(user_id), channel_id)
         
         # Находим задание по ID канала
         task = None
@@ -1146,7 +1146,9 @@ def check_task_subscription():
             }), 404
         
         # Получаем награду за задание
-        task_reward = task['reward']
+        task_reward = int(task['reward'])
+        task_id = int(task['id'])
+        user_id_int = int(user_id)
         
         if is_subscribed:
             try:
@@ -1155,7 +1157,7 @@ def check_task_subscription():
                     with conn.cursor() as cursor:
                         cursor.execute(
                             "SELECT 1 FROM completed_tasks WHERE user_id = %s AND task_id = %s",
-                            (user_id, task['id'])
+                            (user_id_int, task_id)
                         )
                         already_completed = cursor.fetchone() is not None
                         
@@ -1172,13 +1174,13 @@ def check_task_subscription():
                         # Добавляем запись о выполнении задания
                         cursor.execute(
                             "INSERT INTO completed_tasks (user_id, task_id) VALUES (%s, %s)",
-                            (user_id, task['id'])
+                            (user_id_int, task_id)
                         )
                         
                         # Обновляем баланс пользователя (считаем clicks как валюту)
                         cursor.execute(
                             "UPDATE users SET total_clicks = total_clicks + %s WHERE user_id = %s",
-                            (task_reward, user_id)
+                            (task_reward, user_id_int)
                         )
                         
                         conn.commit()
