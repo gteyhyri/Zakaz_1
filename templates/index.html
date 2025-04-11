@@ -1256,12 +1256,13 @@
         }
         
         .task-join-btn {
-            background-color: var(--white);
-            color: var(--dark-blue);
-            border: 1px solid rgba(42, 127, 255, 0.3);
+            background-color: rgba(255, 255, 255, 0.7);
+            color: #000;
+            border: 1px solid rgba(42, 127, 255, 0.2);
             border-radius: 8px;
-            padding: 10px 16px;
+            padding: 12px 16px;
             font-size: 14px;
+            font-weight: 500;
             cursor: pointer;
             transition: var(--transition);
             text-decoration: none;
@@ -1272,10 +1273,12 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            height: 44px;
         }
         
         .task-join-btn:hover {
-            background-color: var(--light-blue);
+            background-color: rgba(255, 255, 255, 0.9);
+            border-color: rgba(42, 127, 255, 0.4);
         }
         
         .task-check-btn {
@@ -1285,6 +1288,7 @@
             border-radius: 20px;
             padding: 10px 16px;
             font-size: 14px;
+            font-weight: 500;
             cursor: pointer;
             transition: var(--transition);
             display: flex;
@@ -1292,6 +1296,7 @@
             justify-content: center;
             min-width: 120px;
             white-space: nowrap;
+            height: 44px;
         }
         
         .task-check-btn:hover {
