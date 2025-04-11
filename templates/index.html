@@ -1250,44 +1250,52 @@
         
         .task-actions {
             display: flex;
-            gap: 8px;
+            justify-content: space-between;
             align-items: center;
+            gap: 12px;
         }
         
         .task-join-btn {
-            background-color: var(--primary-blue);
-            color: var(--white);
-            border: none;
+            background-color: var(--white);
+            color: var(--dark-blue);
+            border: 1px solid rgba(42, 127, 255, 0.3);
             border-radius: 8px;
-            padding: 8px 16px;
+            padding: 10px 16px;
             font-size: 14px;
             cursor: pointer;
             transition: var(--transition);
             text-decoration: none;
             display: flex;
             align-items: center;
-            gap: 6px;
             flex: 1;
-            justify-content: center;
+            justify-content: flex-start;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
         
+        .task-join-btn:hover {
+            background-color: var(--light-blue);
+        }
+        
         .task-check-btn {
-            background-color: var(--white);
-            color: var(--primary-blue);
-            border: 1px solid var(--primary-blue);
-            border-radius: 8px;
-            padding: 8px 16px;
+            background-color: var(--primary-blue);
+            color: var(--white);
+            border: none;
+            border-radius: 20px;
+            padding: 10px 16px;
             font-size: 14px;
             cursor: pointer;
             transition: var(--transition);
             display: flex;
             align-items: center;
-            gap: 6px;
-            min-width: 100px;
             justify-content: center;
+            min-width: 120px;
+            white-space: nowrap;
+        }
+        
+        .task-check-btn:hover {
+            background-color: var(--dark-blue);
         }
         
         .task-card:hover {
@@ -2947,18 +2955,12 @@
                     taskCard.className = 'task-card';
                     
                     taskCard.innerHTML = `
-                        <div class="task-header">
-                            <h3 class="task-title" title="${task.title}">${task.title}</h3>
-                            <span class="task-reward">+${task.reward} $DGR</span>
-                        </div>
                         <div class="task-actions">
                             <a href="${task.channel_link}" target="_blank" class="task-join-btn" title="${task.title}">
-                                <i class="fas fa-external-link-alt"></i>
-                                <span>${task.title}</span>
+                                ${task.title}
                             </a>
                             <button class="task-check-btn" onclick="checkSubscription('${task.channel_id}')">
-                                <i class="fas fa-check"></i>
-                                <span>Проверить</span>
+                                Проверить
                             </button>
                         </div>
                     `;
