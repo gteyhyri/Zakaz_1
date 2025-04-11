@@ -450,6 +450,276 @@
             color: var(--primary-blue);
         }
 
+        /* Стили для реферальной страницы */
+        .referral-container {
+            width: 100%;
+            max-width: 320px;
+            background-color: var(--white);
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .referral-title {
+            color: var(--dark-blue);
+            margin-bottom: 4px;
+            font-size: 22px;
+            font-weight: 700;
+            text-align: center;
+        }
+        
+        .referral-description {
+            color: var(--dark-gray);
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+        
+        .referral-link-container {
+            display: flex;
+            position: relative;
+            margin: 8px 0;
+        }
+        
+        .referral-link {
+            flex: 1;
+            padding: 12px 16px;
+            background-color: var(--light-blue);
+            border: 2px solid var(--primary-blue);
+            border-radius: 12px;
+            color: var(--dark-blue);
+            font-size: 14px;
+            width: 100%;
+            outline: none;
+        }
+        
+        .copy-btn {
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: var(--primary-blue);
+            color: var(--white);
+            border: none;
+            border-radius: 8px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .copy-btn:hover {
+            background-color: var(--dark-blue);
+        }
+        
+        .referral-stats {
+            display: flex;
+            align-items: center;
+            background-color: var(--light-blue);
+            padding: 16px;
+            border-radius: 12px;
+            margin: 8px 0;
+        }
+        
+        .referral-stat-icon {
+            background-color: var(--primary-blue);
+            color: var(--white);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 16px;
+            font-size: 18px;
+        }
+        
+        .referral-stat-info {
+            flex: 1;
+        }
+        
+        .referral-stat-label {
+            display: block;
+            color: var(--dark-gray);
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        
+        .referral-stat-value {
+            display: block;
+            color: var(--dark-blue);
+            font-size: 20px;
+            font-weight: 700;
+        }
+        
+        .referral-earnings {
+            background-color: var(--light-blue);
+            padding: 16px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .earnings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .earnings-title {
+            color: var(--dark-blue);
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .claim-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .claim-amount {
+            color: var(--primary-blue);
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .claim-btn {
+            background-color: var(--primary-blue);
+            color: var(--white);
+            border: none;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .claim-btn:hover {
+            background-color: var(--dark-blue);
+            transform: translateY(-2px);
+        }
+        
+        .claim-btn:disabled {
+            background-color: var(--dark-gray);
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .claim-timer {
+            color: var(--dark-gray);
+            font-size: 12px;
+            text-align: right;
+            font-style: italic;
+        }
+        
+        .referrals-list {
+            list-style: none;
+            padding: 0;
+            margin: 10px 0;
+            max-height: 200px;
+            overflow-y: auto;
+            border-top: 1px solid rgba(0,0,0,0.1);
+            padding-top: 10px;
+        }
+        
+        .referrals-list li {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        .referrals-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .referral-user {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .referral-avatar {
+            width: 24px;
+            height: 24px;
+            background-color: var(--primary-blue);
+            color: var(--white);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+        
+        .referral-username {
+            color: var(--dark-blue);
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .referral-earnings {
+            color: var(--primary-blue);
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .referral-list-placeholder {
+            color: var(--dark-gray);
+            font-style: italic;
+            text-align: center;
+            padding: 20px 0;
+        }
+        
+        .more-referrals {
+            text-align: center;
+            color: var(--dark-gray);
+            font-size: 14px;
+            padding: 8px 0;
+            border-top: 1px dashed rgba(0,0,0,0.1);
+        }
+
+        .referral-benefits {
+            margin-top: 16px;
+        }
+        
+        .benefits-title {
+            color: var(--dark-blue);
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+        
+        .benefits-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .benefits-list li {
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--dark-gray);
+            font-size: 14px;
+        }
+        
+        .benefits-list li i {
+            color: var(--primary-blue);
+        }
+
         /* Стили для страницы заданий */
         .tasks-container {
             width: 100%;
@@ -531,7 +801,485 @@
             background: var(--dark-blue);
         }
 
-        /* Остальные стили остаются без изменений */
+        @media (max-width: 480px) {
+            .clicker-image {
+                width: 200px;
+                height: 200px;
+            }
+            
+            .title {
+                font-size: 20px;
+            }
+            
+            .main-content {
+                margin: 10px;
+                padding: 16px;
+            }
+            
+            .sound-control {
+                top: 70px;
+                right: 15px;
+                width: 36px;
+                height: 36px;
+            }
+        }
+
+        /* Upgrades Page Styles */
+        .upgrades-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .upgrade-card {
+            background-color: var(--white);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .upgrade-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background-color: var(--primary-blue);
+        }
+        
+        .upgrade-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background-color: var(--light-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 16px;
+            flex-shrink: 0;
+        }
+        
+        .upgrade-icon i {
+            color: var(--primary-blue);
+            font-size: 24px;
+        }
+        
+        .upgrade-info {
+            flex: 1;
+        }
+        
+        .upgrade-info h3 {
+            font-size: 16px;
+            margin-bottom: 4px;
+            color: var(--dark-blue);
+        }
+        
+        .upgrade-description {
+            font-size: 12px;
+            color: var(--dark-gray);
+            margin-bottom: 8px;
+        }
+        
+        .upgrade-level {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        
+        .level-label {
+            color: var(--dark-gray);
+            margin-right: 4px;
+        }
+        
+        .level-value {
+            color: var(--primary-blue);
+            font-weight: 600;
+            margin-right: 2px;
+        }
+        
+        .level-max {
+            color: var(--dark-gray);
+        }
+        
+        .upgrade-bonus {
+            font-size: 12px;
+            font-weight: 600;
+            color: #28a745;
+        }
+        
+        .upgrade-purchase-btn {
+            background-color: var(--primary-blue);
+            color: var(--white);
+            border: none;
+            border-radius: 20px;
+            padding: 8px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: var(--transition);
+            white-space: nowrap;
+            min-width: 100px;
+            text-align: center;
+        }
+        
+        .upgrade-purchase-btn:hover {
+            background-color: var(--dark-blue);
+            transform: translateY(-2px);
+        }
+        
+        .upgrade-purchase-btn:active {
+            transform: translateY(0);
+        }
+        
+        .upgrade-purchase-btn:disabled {
+            background-color: var(--dark-gray);
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .upgrade-cost {
+            font-weight: 600;
+        }
+        
+        .back-button {
+            margin-top: 24px;
+            background-color: transparent;
+            color: var(--primary-blue);
+            border: 1px solid var(--primary-blue);
+            border-radius: 20px;
+            padding: 8px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .back-button:hover {
+            background-color: var(--light-blue);
+        }
+        
+        .max-level-badge {
+            background-color: #ffc107;
+            color: #212529;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        /* Стили для страницы рейтинга */
+        .ranking-container {
+            width: 100%;
+            max-width: 320px;
+            background-color: var(--white);
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .ranking-title {
+            color: var(--dark-blue);
+            margin-bottom: 4px;
+            font-size: 22px;
+            font-weight: 700;
+            text-align: center;
+        }
+        
+        .ranking-description {
+            color: var(--dark-gray);
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+        
+        .ranking-list-container {
+            background-color: var(--light-blue);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .ranking-header {
+            display: flex;
+            background-color: var(--primary-blue);
+            color: var(--white);
+            padding: 12px 16px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .rank-column {
+            width: 20%;
+            text-align: center;
+        }
+        
+        .user-column {
+            width: 45%;
+            text-align: left;
+        }
+        
+        .balance-column {
+            width: 35%;
+            text-align: right;
+        }
+        
+        .ranking-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .ranking-item {
+            display: flex;
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        
+        .ranking-item:last-child {
+            border-bottom: none;
+        }
+        
+        .ranking-item:hover {
+            background-color: rgba(255,255,255,0.5);
+        }
+        
+        .ranking-top-1 {
+            background-color: rgba(255, 215, 0, 0.2);
+        }
+        
+        .ranking-top-2 {
+            background-color: rgba(192, 192, 192, 0.2);
+        }
+        
+        .ranking-top-3 {
+            background-color: rgba(205, 127, 50, 0.2);
+        }
+        
+        .ranking-you {
+            background-color: rgba(42, 127, 255, 0.2);
+            font-weight: 600;
+        }
+        
+        .ranking-rank {
+            width: 20%;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .ranking-top-1 .ranking-rank {
+            color: gold;
+        }
+        
+        .ranking-top-2 .ranking-rank {
+            color: silver;
+        }
+        
+        .ranking-top-3 .ranking-rank {
+            color: #CD7F32;
+        }
+        
+        .ranking-username {
+            width: 45%;
+            text-align: left;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .ranking-balance {
+            width: 35%;
+            text-align: right;
+            color: var(--dark-blue);
+            font-weight: 500;
+        }
+        
+        .ranking-list-loading {
+            padding: 24px;
+            text-align: center;
+            color: var(--dark-gray);
+        }
+        
+        .your-rank {
+            background-color: var(--light-blue);
+            padding: 12px 16px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .your-rank-label {
+            color: var(--dark-gray);
+            margin-right: 8px;
+        }
+        
+        .your-rank-value {
+            color: var(--primary-blue);
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        /* Стили для страницы рейтинга рефералов */
+        .referral-ranking-container {
+            width: 100%;
+            max-width: 320px;
+            background-color: var(--white);
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .referral-ranking-title {
+            color: var(--dark-blue);
+            margin-bottom: 4px;
+            font-size: 22px;
+            font-weight: 700;
+            text-align: center;
+        }
+        
+        .referral-ranking-description {
+            color: var(--dark-gray);
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+        
+        .referral-ranking-list-container {
+            background-color: var(--light-blue);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .referral-ranking-header {
+            display: flex;
+            background-color: var(--primary-blue);
+            color: var(--white);
+            padding: 12px 16px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .referral-rank-column {
+            width: 20%;
+            text-align: center;
+        }
+        
+        .referral-user-column {
+            width: 45%;
+            text-align: left;
+        }
+        
+        .referral-count-column {
+            width: 35%;
+            text-align: right;
+        }
+        
+        .referral-ranking-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .referral-ranking-item {
+            display: flex;
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        
+        .referral-ranking-item:last-child {
+            border-bottom: none;
+        }
+        
+        .referral-ranking-item:hover {
+            background-color: rgba(255,255,255,0.5);
+        }
+        
+        .referral-ranking-top-1 {
+            background-color: rgba(255, 215, 0, 0.2);
+        }
+        
+        .referral-ranking-top-2 {
+            background-color: rgba(192, 192, 192, 0.2);
+        }
+        
+        .referral-ranking-top-3 {
+            background-color: rgba(205, 127, 50, 0.2);
+        }
+        
+        .referral-ranking-you {
+            background-color: rgba(42, 127, 255, 0.2);
+            font-weight: 600;
+        }
+        
+        .referral-ranking-rank {
+            width: 20%;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .referral-ranking-top-1 .referral-ranking-rank {
+            color: gold;
+        }
+        
+        .referral-ranking-top-2 .referral-ranking-rank {
+            color: silver;
+        }
+        
+        .referral-ranking-top-3 .referral-ranking-rank {
+            color: #CD7F32;
+        }
+        
+        .referral-ranking-username {
+            width: 45%;
+            text-align: left;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .referral-ranking-count {
+            width: 35%;
+            text-align: right;
+            color: var(--dark-blue);
+            font-weight: 500;
+        }
+        
+        .referral-ranking-list-loading {
+            padding: 24px;
+            text-align: center;
+            color: var(--dark-gray);
+        }
+        
+        .your-referral-rank {
+            background-color: var(--light-blue);
+            padding: 12px 16px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .your-referral-rank-label {
+            color: var(--dark-gray);
+            margin-right: 8px;
+        }
+        
+        .your-referral-rank-value {
+            color: var(--primary-blue);
+            font-weight: 700;
+            font-size: 18px;
+        }
     </style>
 </head>
 <body>
@@ -1780,6 +2528,129 @@
             }
         }
         
+        // Функция для обработки улучшений
+        async function purchaseUpgrade(upgradeType) {
+            handleFirstInteraction();
+            
+            if (!userId) {
+                console.error('User ID not available for upgrading');
+                showNotification('Ошибка при улучшении');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/user/upgrade', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Telegram-Init-Data': tg.initData || ''
+                    },
+                    body: JSON.stringify({ 
+                        userId, 
+                        upgradeType 
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to upgrade');
+                }
+                
+                const data = await response.json();
+                
+                // Update app state with new values
+                appState.totalClicks = data.totalClicks;
+                appState.clickPower = data.clickPower;
+                appState.maxClicks = data.maxClicks;
+                appState.availableClicks = data.availableClicks;
+                appState.regenRate = data.regenRate;
+                appState.upgradeLevels = data.upgradeLevels;
+                
+                // Update UI
+                updateUI();
+                
+                // Show success notification
+                let upgradeMessage = '';
+                if (upgradeType === 'click') {
+                    upgradeMessage = 'Мощность клика увеличена!';
+                } else if (upgradeType === 'storage') {
+                    upgradeMessage = 'Объем хранилища увеличен!';
+                } else if (upgradeType === 'speed') {
+                    upgradeMessage = 'Скорость восстановления увеличена!';
+                }
+                
+                showNotification(upgradeMessage);
+                
+            } catch (error) {
+                console.error('Upgrade error:', error);
+                showNotification(error.message || 'Ошибка при улучшении');
+            }
+        }
+        
+        // Функция для обновления кнопок улучшений
+        function updateUpgradeButtons() {
+            // Click upgrade
+            if (appState.upgradeLevels.click.level >= appState.upgradeLevels.click.maxLevel) {
+                elements.clickUpgradeBtn.innerHTML = '<span class="max-level-badge">МАКС. УРОВЕНЬ</span>';
+                elements.clickUpgradeBtn.disabled = true;
+            } else {
+                elements.clickUpgradeBtn.disabled = appState.totalClicks < appState.upgradeLevels.click.cost;
+                elements.clickUpgradeCost.textContent = `${formatNumber(appState.upgradeLevels.click.cost)} $DGR`;
+            }
+            elements.clickUpgradeLevel.textContent = appState.upgradeLevels.click.level;
+            
+            // Storage upgrade
+            if (appState.upgradeLevels.storage.level >= appState.upgradeLevels.storage.maxLevel) {
+                elements.storageUpgradeBtn.innerHTML = '<span class="max-level-badge">МАКС. УРОВЕНЬ</span>';
+                elements.storageUpgradeBtn.disabled = true;
+            } else {
+                elements.storageUpgradeBtn.disabled = appState.totalClicks < appState.upgradeLevels.storage.cost;
+                elements.storageUpgradeCost.textContent = `${formatNumber(appState.upgradeLevels.storage.cost)} $DGR`;
+            }
+            elements.storageUpgradeLevel.textContent = appState.upgradeLevels.storage.level;
+            
+            // Speed upgrade
+            if (appState.upgradeLevels.speed.level >= appState.upgradeLevels.speed.maxLevel) {
+                elements.speedUpgradeBtn.innerHTML = '<span class="max-level-badge">МАКС. УРОВЕНЬ</span>';
+                elements.speedUpgradeBtn.disabled = true;
+            } else {
+                elements.speedUpgradeBtn.disabled = appState.totalClicks < appState.upgradeLevels.speed.cost;
+                elements.speedUpgradeCost.textContent = `${formatNumber(appState.upgradeLevels.speed.cost)} $DGR`;
+            }
+            elements.speedUpgradeLevel.textContent = appState.upgradeLevels.speed.level;
+            
+            // Update bonus descriptions based on next level
+            updateUpgradeBonusText();
+        }
+        
+        // Функция для обновления текста бонусов улучшений
+        function updateUpgradeBonusText() {
+            const nextClickLevel = appState.upgradeLevels.click.level + 1;
+            let clickBonus = 0;
+            
+            if (nextClickLevel === 1) clickBonus = 2;
+            else if (nextClickLevel === 2) clickBonus = 3.5;
+            else if (nextClickLevel === 3) clickBonus = 1.5;
+            else if (nextClickLevel === 4) clickBonus = 4;
+            else clickBonus = 1 + (nextClickLevel - 4);
+            
+            elements.clickUpgradeBonus.textContent = `+${clickBonus} $DGR за клик`;
+            
+            // Storage bonus
+            const nextStorageLevel = appState.upgradeLevels.storage.level + 1;
+            let storageBonus = 0;
+            
+            if (nextStorageLevel === 1) storageBonus = 20;
+            else if (nextStorageLevel === 2) storageBonus = 25;
+            else if (nextStorageLevel === 3) storageBonus = 30;
+            else storageBonus = 20;
+            
+            elements.storageUpgradeBonus.textContent = `+${storageBonus} тапов`;
+            
+            // Speed bonus is always the same
+            elements.speedUpgradeBonus.textContent = `-0.05 сек на тап`;
+        }
+        
         // Инициализация приложения
         async function initApp() {
             try {
@@ -1801,6 +2672,12 @@
                 
                 // Обработчик для кнопки Claim
                 document.getElementById('claimBtn').addEventListener('click', claimReferralEarnings);
+                
+                // Обработчики для кнопок улучшений
+                elements.clickUpgradeBtn.addEventListener('click', () => purchaseUpgrade('click'));
+                elements.storageUpgradeBtn.addEventListener('click', () => purchaseUpgrade('storage'));
+                elements.speedUpgradeBtn.addEventListener('click', () => purchaseUpgrade('speed'));
+                elements.upgradesBackBtn.addEventListener('click', () => switchPage('mainPage'));
                 
                 // Запускаем таймер для обновления времени до следующего claim
                 startClaimTimer();
