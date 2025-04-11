@@ -2472,28 +2472,25 @@
                 tasksContainer.innerHTML = '';
                 
                 tasks.forEach(task => {
-                    const taskContainer = document.createElement('div');
-                    taskContainer.className = 'task-button-container';
+                    const taskCard = document.createElement('div');
+                    taskCard.className = 'task-card';
                     
-                    // Сокращаем название канала до 5 символов, если оно длинное
-                    const channelName = task.title.length > 5 ? 
-                        task.title.substring(0, 5) + '...' : task.title;
-                    
-                    taskContainer.innerHTML = `
-                        <a href="${task.channel_link}" target="_blank" class="task-channel-btn">
-                            <span class="task-channel-name">${channelName}</span>
-                            <span class="task-reward">${task.reward} $DGR</span>
-                        </a>
-                        <button class="task-check-btn" onclick="checkTaskSubscription('${task.channel_id}', ${task.reward})">
-                            Проверить
-                        </button>
+                    taskCard.innerHTML = `
+                        <div class="task-actions">
+                            <a href="${task.channel_link}" target="_blank" class="task-join-btn" title="${task.title}">
+                                ${task.title}
+                            </a>
+                            <button class="task-check-btn" onclick="checkTaskSubscription('${task.channel_id}', ${task.reward})">
+                                Проверить
+                            </button>
+                        </div>
                     `;
                     
-                    tasksContainer.appendChild(taskContainer);
+                    tasksContainer.appendChild(taskCard);
                 });
             } catch (error) {
                 console.error('Error loading tasks:', error);
-                showNotification('Ошибка при загрузке заданий');
+                showNotification('Ошибка при загрузке заданий', 'error');
             }
         }
         
@@ -2525,13 +2522,17 @@
                 
                 if (data.success) {
                     if (data.is_subscribed) {
-                        showNotification(`Поздравляем! Вы получили ${reward} $DGR!`);
-                        loadUserData(); // Обновляем баланс
+                        if (data.already_completed) {
+                            showNotification('Вы уже выполнили это задание!');
+                        } else {
+                            showNotification(`Поздравляем! Вы получили ${reward} $DGR!`);
+                            loadUserData(); // Обновляем баланс
+                        }
                     } else {
                         showNotification('Вы еще не подписались на канал. Пожалуйста, подпишитесь и попробуйте снова.');
                     }
                 } else {
-                    showNotification(data.message || 'Ошибка при проверке подписки');
+                    showNotification(data.error || 'Ошибка при проверке подписки');
                 }
             } catch (error) {
                 console.error('Error checking subscription:', error);
