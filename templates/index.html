@@ -770,6 +770,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            overflow: hidden;
         }
         
         .task-channel-name {
@@ -777,6 +778,7 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            max-width: 60%;
         }
         
         .task-reward {
@@ -795,6 +797,7 @@
             cursor: pointer;
             white-space: nowrap;
             transition: var(--transition);
+            min-width: 80px;
         }
         
         .task-check-btn:hover {
@@ -821,6 +824,15 @@
                 right: 15px;
                 width: 36px;
                 height: 36px;
+            }
+            
+            .task-channel-name {
+                max-width: 50%;
+            }
+            
+            .task-check-btn {
+                padding: 12px 10px;
+                min-width: 70px;
             }
         }
 
@@ -2463,9 +2475,13 @@
                     const taskContainer = document.createElement('div');
                     taskContainer.className = 'task-button-container';
                     
+                    // Сокращаем название канала до 5 символов, если оно длинное
+                    const channelName = task.title.length > 5 ? 
+                        task.title.substring(0, 5) + '...' : task.title;
+                    
                     taskContainer.innerHTML = `
                         <a href="${task.channel_link}" target="_blank" class="task-channel-btn">
-                            <span class="task-channel-name">${task.title}</span>
+                            <span class="task-channel-name">${channelName}</span>
                             <span class="task-reward">${task.reward} $DGR</span>
                         </a>
                         <button class="task-check-btn" onclick="checkTaskSubscription('${task.channel_id}', ${task.reward})">
