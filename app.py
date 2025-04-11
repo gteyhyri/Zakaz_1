@@ -1129,6 +1129,9 @@ def check_task_subscription():
                 'error': 'Missing required parameters'
             }), 400
             
+        # Преобразуем user_id в строку для безопасности
+        user_id_str = str(user_id)
+        
         # Используем функцию проверки подписки через Telegram API
         is_subscribed = check_subscription(int(user_id), channel_id)
         
@@ -1145,10 +1148,9 @@ def check_task_subscription():
                 'error': 'Task not found'
             }), 404
         
-        # Получаем награду за задание
+        # Получаем награду за задание и преобразуем ID в строку
         task_reward = int(task['reward'])
-        task_id = int(task['id'])
-        user_id_int = int(user_id)
+        task_id = str(task['id'])
         
         if is_subscribed:
             try:
@@ -1156,8 +1158,8 @@ def check_task_subscription():
                 with get_db_connection() as conn:
                     with conn.cursor() as cursor:
                         cursor.execute(
-                            "SELECT 1 FROM completed_tasks WHERE user_id = %s AND task_id = %s",
-                            (user_id_int, task_id)
+                            "SELECT 1 FROM completed_tasks WHERE user_id::text = %s AND task_id::text = %s",
+                            (user_id_str, task_id)
                         )
                         already_completed = cursor.fetchone() is not None
                         
@@ -1171,16 +1173,30 @@ def check_task_subscription():
                 # Обновляем баланс пользователя и добавляем запись о выполнении задания
                 with get_db_connection() as conn:
                     with conn.cursor() as cursor:
+                        # Изменяем схему таблицы если необходимо
+                        try:
+                            cursor.execute(
+                                """
+                                ALTER TABLE completed_tasks 
+                                ALTER COLUMN user_id TYPE BIGINT USING user_id::bigint,
+                                ALTER COLUMN task_id TYPE BIGINT USING task_id::bigint
+                                """
+                            )
+                            conn.commit()
+                        except Exception as e:
+                            app.logger.info(f"Schema adjustment error or already adjusted: {str(e)}")
+                            conn.rollback()
+                        
                         # Добавляем запись о выполнении задания
                         cursor.execute(
                             "INSERT INTO completed_tasks (user_id, task_id) VALUES (%s, %s)",
-                            (user_id_int, task_id)
+                            (user_id_str, task_id)
                         )
                         
                         # Обновляем баланс пользователя (считаем clicks как валюту)
                         cursor.execute(
-                            "UPDATE users SET total_clicks = total_clicks + %s WHERE user_id = %s",
-                            (task_reward, user_id_int)
+                            "UPDATE users SET total_clicks = total_clicks + %s WHERE user_id::text = %s",
+                            (task_reward, user_id_str)
                         )
                         
                         conn.commit()
@@ -1194,7 +1210,7 @@ def check_task_subscription():
                 app.logger.error(f"Database error in check_task_subscription: {str(e)}")
                 return jsonify({
                     'success': False,
-                    'error': 'Database error'
+                    'error': 'Database error: ' + str(e)
                 }), 500
         else:
             return jsonify({
@@ -1204,7 +1220,10 @@ def check_task_subscription():
             
     except Exception as e:
         app.logger.error(f"Error checking subscription: {str(e)}")
-        return jsonify({'error': 'Failed to check subscription'}), 500
+        return jsonify({
+            'success': False,
+            'error': 'Failed to check subscription: ' + str(e)
+        }), 500
 
 # Инициализация базы данных при запуске
 init_db()
