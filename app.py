@@ -16,7 +16,7 @@ app = Flask(__name__, static_folder='static')
 CORS(app)
 
 # Инициализация бота Telegram
-bot = telebot.TeleBot('7600352334:AAGtCfbQw2nz6a7WvbX9nbVwW1cdQJIGKBk')
+bot = telebot.TeleBot('7615667336:AAGtPhj_aZdkptoXnOpF5DNvZBus9lIQCSk')
 
 # Функция для проверки подписки пользователя на канал
 def check_subscription(user_id, chat_id):
@@ -1020,7 +1020,7 @@ def health_check():
         return jsonify({'status': 'error', 'database': str(e)}), 500
 
 @app.route('/api/user/check-subscription', methods=['POST'])
-def check_subscription():
+def check_user_subscription():
     try:
         data = request.get_json()
         user_id = data.get('userId')
