@@ -10,9 +10,22 @@ import sqlite3
 import json
 from tasks_config import get_task_by_id, get_all_tasks, TASKS
 import random
+import telebot
 
 app = Flask(__name__, static_folder='static')
 CORS(app)
+
+# Инициализация бота Telegram
+bot = telebot.TeleBot('7615667336:AAGtPhj_aZdkptoXnOpF5DNvZBus9lIQCSk')
+
+# Функция для проверки подписки пользователя на канал
+def check_subscription(user_id, chat_id):
+    try:
+        status = bot.get_chat_member(chat_id, user_id).status
+        return status in ["creator", "administrator", "member"]
+    except Exception as e:
+        app.logger.error(f"Error checking subscription: {str(e)}")
+        return False
 
 # Конфигурация PostgreSQL
 DATABASE_URL = "postgresql://zakazbd_user:hk99lR7fL5jYIdjpGauwzsWA4COo00pm@dpg-cvmoh6ngi27c73cv25dg-a.oregon-postgres.render.com/zakazbd"
@@ -1030,7 +1043,7 @@ def check_subscription():
             return jsonify({'error': 'Task already completed'}), 400
         
         # Проверяем подписку
-        is_subscribed = check_channel_subscription(user_id, channel_id)
+        is_subscribed = check_subscription(user_id, channel_id)
         
         if is_subscribed:
             # Добавляем запись о выполнении задания
@@ -1096,19 +1109,11 @@ def get_user_tasks():
 @app.route('/api/tasks', methods=['GET'])
 def get_tasks():
     try:
-        # Список с одним заданием для канала "ДЕНЬГИ В ТОНЕ"
-        tasks = [
-            {
-                'id': 1,
-                'title': 'Подпишитесь на канал ДЕНЬГИ В ТОНЕ',
-                'channel_id': '-1002435743499',
-                'channel_link': 'https://t.me/moneyiston',
-                'reward': 1000
-            }
-        ]
+        # Получаем список заданий из конфигурации
+        tasks = get_all_tasks()
         return jsonify(tasks)
     except Exception as e:
-        print(f"Error getting tasks: {str(e)}")
+        app.logger.error(f"Error getting tasks: {str(e)}")
         return jsonify({'error': 'Failed to load tasks'}), 500
 
 @app.route('/api/tasks/check-subscription', methods=['POST'])
@@ -1124,33 +1129,71 @@ def check_task_subscription():
                 'error': 'Missing required parameters'
             }), 400
             
-        # Здесь должна быть реальная проверка подписки через Telegram API
-        # Для примера используем случайный результат
-        is_subscribed = random.choice([True, False])
+        # Используем функцию проверки подписки через Telegram API
+        is_subscribed = check_subscription(user_id, channel_id)
+        
+        # Находим задание по ID канала
+        task = None
+        for t in get_all_tasks():
+            if t['channel_id'] == channel_id:
+                task = t
+                break
+        
+        if not task:
+            return jsonify({
+                'success': False,
+                'error': 'Task not found'
+            }), 404
+        
+        # Получаем награду за задание
+        task_reward = task['reward']
         
         if is_subscribed:
-            # Начисляем награду пользователю
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            
-            # Получаем награду за задание
-            task_reward = 1000  # Это значение должно соответствовать награде в списке заданий
-            
-            # Обновляем баланс пользователя
-            cursor.execute('''
-                UPDATE users 
-                SET balance = balance + ? 
-                WHERE user_id = ?
-            ''', (task_reward, user_id))
-            
-            conn.commit()
-            conn.close()
-            
-            return jsonify({
-                'success': True,
-                'is_subscribed': True,
-                'reward': task_reward
-            })
+            try:
+                # Проверяем, выполнено ли уже задание
+                with get_db_connection() as conn:
+                    with conn.cursor() as cursor:
+                        cursor.execute(
+                            "SELECT 1 FROM completed_tasks WHERE user_id = %s AND task_id = %s",
+                            (user_id, task['id'])
+                        )
+                        already_completed = cursor.fetchone() is not None
+                        
+                if already_completed:
+                    return jsonify({
+                        'success': True,
+                        'is_subscribed': True,
+                        'already_completed': True
+                    })
+                
+                # Обновляем баланс пользователя и добавляем запись о выполнении задания
+                with get_db_connection() as conn:
+                    with conn.cursor() as cursor:
+                        # Добавляем запись о выполнении задания
+                        cursor.execute(
+                            "INSERT INTO completed_tasks (user_id, task_id) VALUES (%s, %s)",
+                            (user_id, task['id'])
+                        )
+                        
+                        # Обновляем баланс пользователя (считаем clicks как валюту)
+                        cursor.execute(
+                            "UPDATE users SET total_clicks = total_clicks + %s WHERE user_id = %s",
+                            (task_reward, user_id)
+                        )
+                        
+                        conn.commit()
+                
+                return jsonify({
+                    'success': True,
+                    'is_subscribed': True,
+                    'reward': task_reward
+                })
+            except Exception as e:
+                app.logger.error(f"Database error in check_task_subscription: {str(e)}")
+                return jsonify({
+                    'success': False,
+                    'error': 'Database error'
+                }), 500
         else:
             return jsonify({
                 'success': True,
@@ -1158,7 +1201,7 @@ def check_task_subscription():
             })
             
     except Exception as e:
-        print(f"Error checking subscription: {str(e)}")
+        app.logger.error(f"Error checking subscription: {str(e)}")
         return jsonify({'error': 'Failed to check subscription'}), 500
 
 # Инициализация базы данных при запуске
