@@ -136,13 +136,13 @@
             object-fit: cover;
             cursor: pointer;
             transition: var(--transition);
-            border: 4px solid var(--primary-blue); /* Изменяем цвет контура на основной синий */
-            background-color: rgba(42, 127, 255, 0.1); /* Светло-голубой фон с небольшой прозрачностью */
-            box-shadow: 0 0 0 8px rgba(42, 127, 255, 0.2); /* Добавляем внешнюю тень для эффекта "контура" */
+            border: 4px solid var(--primary-blue);
+            background-color: rgba(42, 127, 255, 0.1);
+            box-shadow: 0 0 0 8px rgba(42, 127, 255, 0.2);
         }
         .clicker-image:active {
             transform: scale(0.95);
-            background-color: rgba(42, 127, 255, 0.15); /* Немного темнее при нажатии */
+            background-color: rgba(42, 127, 255, 0.15);
         }
 
         .click-effect {
@@ -450,738 +450,6 @@
             color: var(--primary-blue);
         }
 
-        /* Остальные стили остаются без изменений */
-        .referral-container {
-            width: 100%;
-            max-width: 320px;
-            background-color: var(--white);
-            padding: 24px;
-            border-radius: 16px;
-            box-shadow: var(--shadow);
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-        
-        .referral-title {
-            color: var(--dark-blue);
-            margin-bottom: 4px;
-            font-size: 22px;
-            font-weight: 700;
-            text-align: center;
-        }
-        
-        .referral-description {
-            color: var(--dark-gray);
-            font-size: 14px;
-            text-align: center;
-            margin-bottom: 12px;
-        }
-        
-        .referral-link-container {
-            display: flex;
-            position: relative;
-            margin: 8px 0;
-        }
-        
-        .referral-link {
-            flex: 1;
-            padding: 12px 16px;
-            background-color: var(--light-blue);
-            border: 2px solid var(--primary-blue);
-            border-radius: 12px;
-            color: var(--dark-blue);
-            font-size: 14px;
-            width: 100%;
-            outline: none;
-        }
-        
-        .copy-btn {
-            position: absolute;
-            right: 5px;
-            top: 50%;
-            transform: translateY(-50%);
-            background-color: var(--primary-blue);
-            color: var(--white);
-            border: none;
-            border-radius: 8px;
-            width: 36px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-        
-        .copy-btn:hover {
-            background-color: var(--dark-blue);
-        }
-        
-        .referral-stats {
-            display: flex;
-            align-items: center;
-            background-color: var(--light-blue);
-            padding: 16px;
-            border-radius: 12px;
-            margin: 8px 0;
-        }
-        
-        .referral-stat-icon {
-            background-color: var(--primary-blue);
-            color: var(--white);
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 16px;
-            font-size: 18px;
-        }
-        
-        .referral-stat-info {
-            flex: 1;
-        }
-        
-        .referral-stat-label {
-            display: block;
-            color: var(--dark-gray);
-            font-size: 14px;
-            margin-bottom: 4px;
-        }
-        
-        .referral-stat-value {
-            display: block;
-            color: var(--dark-blue);
-            font-size: 20px;
-            font-weight: 700;
-        }
-        
-        .referral-earnings {
-            background-color: var(--light-blue);
-            padding: 16px;
-            border-radius: 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        
-        .earnings-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .earnings-title {
-            color: var(--dark-blue);
-            font-size: 16px;
-            font-weight: 600;
-            margin: 0;
-        }
-        
-        .claim-container {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .claim-amount {
-            color: var(--primary-blue);
-            font-weight: 600;
-            font-size: 14px;
-        }
-        
-        .claim-btn {
-            background-color: var(--primary-blue);
-            color: var(--white);
-            border: none;
-            border-radius: 8px;
-            padding: 6px 12px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-        
-        .claim-btn:hover {
-            background-color: var(--dark-blue);
-            transform: translateY(-2px);
-        }
-        
-        .claim-btn:disabled {
-            background-color: var(--dark-gray);
-            cursor: not-allowed;
-            transform: none;
-        }
-        
-        .claim-timer {
-            color: var(--dark-gray);
-            font-size: 12px;
-            text-align: right;
-            font-style: italic;
-        }
-        
-        .referrals-list {
-            list-style: none;
-            padding: 0;
-            margin: 10px 0;
-            max-height: 200px;
-            overflow-y: auto;
-            border-top: 1px solid rgba(0,0,0,0.1);
-            padding-top: 10px;
-        }
-        
-        .referrals-list li {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(0,0,0,0.05);
-        }
-        
-        .referrals-list li:last-child {
-            border-bottom: none;
-        }
-        
-        .referral-user {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .referral-avatar {
-            width: 24px;
-            height: 24px;
-            background-color: var(--primary-blue);
-            color: var(--white);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-        }
-        
-        .referral-username {
-            color: var(--dark-blue);
-            font-size: 14px;
-            font-weight: 500;
-        }
-        
-        .referral-earnings {
-            color: var(--primary-blue);
-            font-size: 14px;
-            font-weight: 600;
-        }
-        
-        .referral-list-placeholder {
-            color: var(--dark-gray);
-            font-style: italic;
-            text-align: center;
-            padding: 20px 0;
-        }
-        
-        .more-referrals {
-            text-align: center;
-            color: var(--dark-gray);
-            font-size: 14px;
-            padding: 8px 0;
-            border-top: 1px dashed rgba(0,0,0,0.1);
-        }
-
-        .ranking-btn {
-            background-color: var(--light-blue);
-            color: var(--dark-blue);
-            border: 2px solid var(--primary-blue);
-        }
-        
-        .ranking-btn:hover {
-            background-color: var(--primary-blue);
-            color: var(--white);
-        }
-        
-        /* Стили для страницы рейтинга */
-        .ranking-container {
-            width: 100%;
-            max-width: 320px;
-            background-color: var(--white);
-            padding: 24px;
-            border-radius: 16px;
-            box-shadow: var(--shadow);
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-        
-        .ranking-title {
-            color: var(--dark-blue);
-            margin-bottom: 4px;
-            font-size: 22px;
-            font-weight: 700;
-            text-align: center;
-        }
-        
-        .ranking-description {
-            color: var(--dark-gray);
-            font-size: 14px;
-            text-align: center;
-            margin-bottom: 12px;
-        }
-        
-        .ranking-list-container {
-            background-color: var(--light-blue);
-            border-radius: 12px;
-            overflow: hidden;
-        }
-        
-        .ranking-header {
-            display: flex;
-            background-color: var(--primary-blue);
-            color: var(--white);
-            padding: 12px 16px;
-            font-weight: 600;
-            font-size: 14px;
-        }
-        
-        .rank-column {
-            width: 20%;
-            text-align: center;
-        }
-        
-        .user-column {
-            width: 45%;
-            text-align: left;
-        }
-        
-        .balance-column {
-            width: 35%;
-            text-align: right;
-        }
-        
-        .ranking-list {
-            max-height: 300px;
-            overflow-y: auto;
-        }
-        
-        .ranking-item {
-            display: flex;
-            padding: 12px 16px;
-            border-bottom: 1px solid rgba(0,0,0,0.05);
-            font-size: 14px;
-            transition: background-color 0.2s;
-        }
-        
-        .ranking-item:last-child {
-            border-bottom: none;
-        }
-        
-        .ranking-item:hover {
-            background-color: rgba(255,255,255,0.5);
-        }
-        
-        .ranking-top-1 {
-            background-color: rgba(255, 215, 0, 0.2);
-        }
-        
-        .ranking-top-2 {
-            background-color: rgba(192, 192, 192, 0.2);
-        }
-        
-        .ranking-top-3 {
-            background-color: rgba(205, 127, 50, 0.2);
-        }
-        
-        .ranking-you {
-            background-color: rgba(42, 127, 255, 0.2);
-            font-weight: 600;
-        }
-        
-        .ranking-rank {
-            width: 20%;
-            text-align: center;
-            font-weight: 600;
-        }
-        
-        .ranking-top-1 .ranking-rank {
-            color: gold;
-        }
-        
-        .ranking-top-2 .ranking-rank {
-            color: silver;
-        }
-        
-        .ranking-top-3 .ranking-rank {
-            color: #CD7F32;
-        }
-        
-        .ranking-username {
-            width: 45%;
-            text-align: left;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        
-        .ranking-balance {
-            width: 35%;
-            text-align: right;
-            color: var(--dark-blue);
-            font-weight: 500;
-        }
-        
-        .ranking-list-loading {
-            padding: 24px;
-            text-align: center;
-            color: var(--dark-gray);
-        }
-        
-        .your-rank {
-            background-color: var(--light-blue);
-            padding: 12px 16px;
-            border-radius: 12px;
-            text-align: center;
-        }
-        
-        .your-rank-label {
-            color: var(--dark-gray);
-            margin-right: 8px;
-        }
-        
-        .your-rank-value {
-            color: var(--primary-blue);
-            font-weight: 700;
-            font-size: 18px;
-        }
-
-        /* Стили для страницы рейтинга рефералов */
-        .referral-ranking-container {
-            width: 100%;
-            max-width: 320px;
-            background-color: var(--white);
-            padding: 24px;
-            border-radius: 16px;
-            box-shadow: var(--shadow);
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-        
-        .referral-ranking-title {
-            color: var(--dark-blue);
-            margin-bottom: 4px;
-            font-size: 22px;
-            font-weight: 700;
-            text-align: center;
-        }
-        
-        .referral-ranking-description {
-            color: var(--dark-gray);
-            font-size: 14px;
-            text-align: center;
-            margin-bottom: 12px;
-        }
-        
-        .referral-ranking-list-container {
-            background-color: var(--light-blue);
-            border-radius: 12px;
-            overflow: hidden;
-        }
-        
-        .referral-ranking-header {
-            display: flex;
-            background-color: var(--primary-blue);
-            color: var(--white);
-            padding: 12px 16px;
-            font-weight: 600;
-            font-size: 14px;
-        }
-        
-        .referral-rank-column {
-            width: 20%;
-            text-align: center;
-        }
-        
-        .referral-user-column {
-            width: 45%;
-            text-align: left;
-        }
-        
-        .referral-count-column {
-            width: 35%;
-            text-align: right;
-        }
-        
-        .referral-ranking-list {
-            max-height: 300px;
-            overflow-y: auto;
-        }
-        
-        .referral-ranking-item {
-            display: flex;
-            padding: 12px 16px;
-            border-bottom: 1px solid rgba(0,0,0,0.05);
-            font-size: 14px;
-            transition: background-color 0.2s;
-        }
-        
-        .referral-ranking-item:last-child {
-            border-bottom: none;
-        }
-        
-        .referral-ranking-item:hover {
-            background-color: rgba(255,255,255,0.5);
-        }
-        
-        .referral-ranking-top-1 {
-            background-color: rgba(255, 215, 0, 0.2);
-        }
-        
-        .referral-ranking-top-2 {
-            background-color: rgba(192, 192, 192, 0.2);
-        }
-        
-        .referral-ranking-top-3 {
-            background-color: rgba(205, 127, 50, 0.2);
-        }
-        
-        .referral-ranking-you {
-            background-color: rgba(42, 127, 255, 0.2);
-            font-weight: 600;
-        }
-        
-        .referral-ranking-rank {
-            width: 20%;
-            text-align: center;
-            font-weight: 600;
-        }
-        
-        .referral-ranking-top-1 .referral-ranking-rank {
-            color: gold;
-        }
-        
-        .referral-ranking-top-2 .referral-ranking-rank {
-            color: silver;
-        }
-        
-        .referral-ranking-top-3 .referral-ranking-rank {
-            color: #CD7F32;
-        }
-        
-        .referral-ranking-username {
-            width: 45%;
-            text-align: left;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        
-        .referral-ranking-count {
-            width: 35%;
-            text-align: right;
-            color: var(--dark-blue);
-            font-weight: 500;
-        }
-        
-        .referral-ranking-list-loading {
-            padding: 24px;
-            text-align: center;
-            color: var(--dark-gray);
-        }
-        
-        .your-referral-rank {
-            background-color: var(--light-blue);
-            padding: 12px 16px;
-            border-radius: 12px;
-            text-align: center;
-        }
-        
-        .your-referral-rank-label {
-            color: var(--dark-gray);
-            margin-right: 8px;
-        }
-        
-        .your-referral-rank-value {
-            color: var(--primary-blue);
-            font-weight: 700;
-            font-size: 18px;
-        }
-
-        @media (max-width: 480px) {
-            .clicker-image {
-                width: 200px;
-                height: 200px;
-            }
-            
-            .title {
-                font-size: 20px;
-            }
-            
-            .main-content {
-                margin: 10px;
-                padding: 16px;
-            }
-            
-            .sound-control {
-                top: 70px;
-                right: 15px;
-                width: 36px;
-                height: 36px;
-            }
-        }
-
-        /* Upgrades Page Styles */
-        .upgrades-container {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            width: 100%;
-            max-width: 500px;
-            margin: 0 auto;
-        }
-        
-        .upgrade-card {
-            background-color: var(--white);
-            border-radius: 12px;
-            padding: 16px;
-            display: flex;
-            align-items: center;
-            box-shadow: var(--shadow);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .upgrade-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 4px;
-            height: 100%;
-            background-color: var(--primary-blue);
-        }
-        
-        .upgrade-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background-color: var(--light-blue);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 16px;
-            flex-shrink: 0;
-        }
-        
-        .upgrade-icon i {
-            color: var(--primary-blue);
-            font-size: 24px;
-        }
-        
-        .upgrade-info {
-            flex: 1;
-        }
-        
-        .upgrade-info h3 {
-            font-size: 16px;
-            margin-bottom: 4px;
-            color: var(--dark-blue);
-        }
-        
-        .upgrade-description {
-            font-size: 12px;
-            color: var(--dark-gray);
-            margin-bottom: 8px;
-        }
-        
-        .upgrade-level {
-            display: flex;
-            align-items: center;
-            font-size: 14px;
-            margin-bottom: 4px;
-        }
-        
-        .level-label {
-            color: var(--dark-gray);
-            margin-right: 4px;
-        }
-        
-        .level-value {
-            color: var(--primary-blue);
-            font-weight: 600;
-            margin-right: 2px;
-        }
-        
-        .level-max {
-            color: var(--dark-gray);
-        }
-        
-        .upgrade-bonus {
-            font-size: 12px;
-            font-weight: 600;
-            color: #28a745;
-        }
-        
-        .upgrade-purchase-btn {
-            background-color: var(--primary-blue);
-            color: var(--white);
-            border: none;
-            border-radius: 20px;
-            padding: 8px 16px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: var(--transition);
-            white-space: nowrap;
-            min-width: 100px;
-            text-align: center;
-        }
-        
-        .upgrade-purchase-btn:hover {
-            background-color: var(--dark-blue);
-            transform: translateY(-2px);
-        }
-        
-        .upgrade-purchase-btn:active {
-            transform: translateY(0);
-        }
-        
-        .upgrade-purchase-btn:disabled {
-            background-color: var(--dark-gray);
-            cursor: not-allowed;
-            transform: none;
-        }
-        
-        .upgrade-cost {
-            font-weight: 600;
-        }
-        
-        .back-button {
-            margin-top: 24px;
-            background-color: transparent;
-            color: var(--primary-blue);
-            border: 1px solid var(--primary-blue);
-            border-radius: 20px;
-            padding: 8px 16px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-        
-        .back-button:hover {
-            background-color: var(--light-blue);
-        }
-        
-        .max-level-badge {
-            background-color: #ffc107;
-            color: #212529;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-            text-align: center;
-        }
-
         /* Стили для страницы заданий */
         .tasks-container {
             width: 100%;
@@ -1210,349 +478,60 @@
             margin-bottom: 12px;
         }
         
-        .task-card {
-            background-color: var(--light-blue);
-            border-radius: 12px;
-            padding: 16px;
+        /* Новые стили для кнопок заданий */
+        .task-button-container {
             display: flex;
-            flex-direction: column;
-            gap: 12px;
-            transition: var(--transition);
-            border: 1px solid rgba(42, 127, 255, 0.1);
-            margin-bottom: 16px;
-        }
-        
-        .task-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            width: 100%;
             margin-bottom: 12px;
-        }
-        
-        .task-title {
-            color: var(--dark-blue);
-            font-size: 16px;
-            font-weight: 600;
-            flex: 1;
-            white-space: nowrap;
+            border-radius: 12px;
             overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 200px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
         
-        .task-reward {
-            color: var(--primary-blue);
-            font-weight: 600;
-            font-size: 14px;
-            white-space: nowrap;
-            margin-left: 12px;
-        }
-        
-        .task-actions {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 12px;
-        }
-        
-        .task-join-btn {
-            background-color: rgba(255, 255, 255, 0.7);
-            color: #000;
-            border: 1px solid rgba(42, 127, 255, 0.2);
-            border-radius: 8px;
+        .task-channel-btn {
+            flex-grow: 1;
+            background: white;
+            color: black;
+            border: none;
             padding: 12px 16px;
-            font-size: 14px;
+            text-align: left;
             font-weight: 500;
-            cursor: pointer;
-            transition: var(--transition);
             text-decoration: none;
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            flex: 1;
-            justify-content: flex-start;
+        }
+        
+        .task-channel-name {
+            flex-grow: 1;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            height: 44px;
         }
         
-        .task-join-btn:hover {
-            background-color: rgba(255, 255, 255, 0.9);
-            border-color: rgba(42, 127, 255, 0.4);
+        .task-reward {
+            color: var(--primary-blue);
+            font-weight: 600;
+            margin-left: 8px;
+            white-space: nowrap;
         }
         
         .task-check-btn {
-            background-color: var(--primary-blue);
-            color: var(--white);
+            background: var(--primary-blue);
+            color: white;
             border: none;
-            border-radius: 20px;
-            padding: 10px 16px;
-            font-size: 14px;
+            padding: 12px 16px;
             font-weight: 500;
             cursor: pointer;
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 120px;
             white-space: nowrap;
-            height: 44px;
-        }
-        
-        .task-check-btn:hover {
-            background-color: var(--dark-blue);
-        }
-        
-        .task-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(42, 127, 255, 0.15);
-        }
-        
-        .task-card.completed {
-            background-color: rgba(40, 167, 69, 0.1);
-            border-color: rgba(40, 167, 69, 0.2);
-        }
-        
-        .task-card.completed .task-title {
-            color: #28a745;
-        }
-        
-        .task-card.completed .task-reward {
-            color: #28a745;
-        }
-        
-        .task-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .task-title {
-            color: var(--dark-blue);
-            font-size: 16px;
-            font-weight: 600;
-            flex: 1;
-        }
-        
-        .task-reward {
-            color: var(--primary-blue);
-            font-weight: 600;
-            font-size: 14px;
-            white-space: nowrap;
-            margin-left: 12px;
-        }
-        
-        .task-actions {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-        
-        .task-join-btn {
-            background-color: var(--primary-blue);
-            color: var(--white);
-            border: none;
-            border-radius: 8px;
-            padding: 8px 16px;
-            font-size: 14px;
-            cursor: pointer;
             transition: var(--transition);
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        
-        .task-join-btn:hover {
-            background-color: var(--dark-blue);
-            transform: translateY(-2px);
-        }
-        
-        .task-join-btn.completed {
-            background-color: #28a745;
-            cursor: not-allowed;
-        }
-        
-        .task-check-btn {
-            background-color: var(--white);
-            color: var(--primary-blue);
-            border: 1px solid var(--primary-blue);
-            border-radius: 8px;
-            padding: 8px 16px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            gap: 6px;
         }
         
         .task-check-btn:hover {
-            background-color: var(--light-blue);
-        }
-        
-        .task-check-btn.completed {
-            background-color: #28a745;
-            color: var(--white);
-            border-color: #28a745;
-            cursor: not-allowed;
-        }
-        
-        .task-check-btn.loading {
-            background-color: var(--dark-gray);
-            color: var(--white);
-            border-color: var(--dark-gray);
-            cursor: wait;
-        }
-        
-        .task-check-btn i {
-            font-size: 16px;
+            background: var(--dark-blue);
         }
 
-        /* Стили для заданий */
-        .task-item {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 16px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .task-content {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .task-content h3 {
-            margin: 0;
-            color: #fff;
-            font-size: 18px;
-        }
-
-        .task-content p {
-            margin: 0;
-            color: #fff;
-            opacity: 0.8;
-        }
-
-        .channel-link {
-            display: inline-block;
-            padding: 8px 16px;
-            background: rgba(255, 255, 255, 0.1);
-            color: #fff;
-            text-decoration: none;
-            border-radius: 8px;
-            transition: background 0.3s;
-        }
-
-        .channel-link:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        .check-subscription {
-            padding: 8px 16px;
-            background: #4CAF50;
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        .check-subscription:hover {
-            background: #45a049;
-        }
-
-        .task-completed {
-            display: inline-block;
-            padding: 8px 16px;
-            background: rgba(76, 175, 80, 0.2);
-            color: #4CAF50;
-            border-radius: 8px;
-        }
-
-        .tasks-section {
-            padding: 20px;
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        .tasks-section h2 {
-            color: var(--primary-color);
-            margin-bottom: 20px;
-            text-align: center;
-            font-size: 24px;
-        }
-
-        .task-card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .task-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .task-title {
-            color: var(--text-color);
-            font-size: 18px;
-            margin: 0;
-        }
-
-        .task-reward {
-            color: var(--primary-color);
-            font-weight: bold;
-            font-size: 16px;
-        }
-
-        .task-actions {
-            display: flex;
-            gap: 10px;
-        }
-
-        .task-join-btn, .task-check-btn {
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-size: 14px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            transition: all 0.3s ease;
-        }
-
-        .task-join-btn {
-            background: var(--primary-color);
-            color: white;
-            text-decoration: none;
-        }
-
-        .task-join-btn:hover {
-            background: var(--primary-color-dark);
-        }
-
-        .task-check-btn {
-            background: var(--success-color);
-            color: white;
-            border: none;
-        }
-
-        .task-check-btn:hover {
-            background: var(--success-color-dark);
-        }
-
-        .task-check-btn:disabled {
-            background: var(--dark-gray);
-            cursor: not-allowed;
-        }
+        /* Остальные стили остаются без изменений */
     </style>
 </head>
 <body>
@@ -2713,6 +1692,94 @@
             }
         }
         
+        // Функция для загрузки заданий
+        async function loadTasks() {
+            try {
+                const response = await fetch('/api/tasks', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Telegram-Init-Data': tg.initData || ''
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load tasks');
+                }
+                
+                const tasks = await response.json();
+                const tasksContainer = document.getElementById('tasksList');
+                tasksContainer.innerHTML = '';
+                
+                tasks.forEach(task => {
+                    const taskContainer = document.createElement('div');
+                    taskContainer.className = 'task-button-container';
+                    
+                    taskContainer.innerHTML = `
+                        <a href="${task.channel_link}" target="_blank" class="task-channel-btn">
+                            <span class="task-channel-name">${task.title}</span>
+                            <span class="task-reward">${task.reward} $DGR</span>
+                        </a>
+                        <button class="task-check-btn" onclick="checkTaskSubscription('${task.channel_id}', ${task.reward})">
+                            Проверить
+                        </button>
+                    `;
+                    
+                    tasksContainer.appendChild(taskContainer);
+                });
+            } catch (error) {
+                console.error('Error loading tasks:', error);
+                showNotification('Ошибка при загрузке заданий');
+            }
+        }
+        
+        // Функция для проверки подписки на канал
+        async function checkTaskSubscription(channelId, reward) {
+            try {
+                const checkBtn = event.target;
+                checkBtn.disabled = true;
+                checkBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                
+                const response = await fetch('/api/tasks/check-subscription', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Telegram-Init-Data': tg.initData || ''
+                    },
+                    body: JSON.stringify({
+                        user_id: userId,
+                        channel_id: channelId,
+                        reward: reward
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to check subscription');
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    if (data.is_subscribed) {
+                        showNotification(`Поздравляем! Вы получили ${reward} $DGR!`);
+                        loadUserData(); // Обновляем баланс
+                    } else {
+                        showNotification('Вы еще не подписались на канал. Пожалуйста, подпишитесь и попробуйте снова.');
+                    }
+                } else {
+                    showNotification(data.message || 'Ошибка при проверке подписки');
+                }
+            } catch (error) {
+                console.error('Error checking subscription:', error);
+                showNotification('Произошла ошибка при проверке подписки');
+            } finally {
+                if (event.target) {
+                    event.target.disabled = false;
+                    event.target.textContent = 'Проверить';
+                }
+            }
+        }
+        
         // Инициализация приложения
         async function initApp() {
             try {
@@ -2762,262 +1829,6 @@
         
         // Запуск приложения
         document.addEventListener('DOMContentLoaded', initApp);
-
-        // Add function to handle upgrading
-        async function purchaseUpgrade(upgradeType) {
-            handleFirstInteraction();
-            
-            if (!userId) {
-                console.error('User ID not available for upgrading');
-                showNotification('Ошибка при улучшении');
-                return;
-            }
-            
-            try {
-                const response = await fetch('/api/user/upgrade', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Telegram-Init-Data': tg.initData || ''
-                    },
-                    body: JSON.stringify({ 
-                        userId, 
-                        upgradeType 
-                    })
-                });
-                
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || 'Failed to upgrade');
-                }
-                
-                const data = await response.json();
-                
-                // Update app state with new values
-                appState.totalClicks = data.totalClicks;
-                appState.clickPower = data.clickPower;
-                appState.maxClicks = data.maxClicks;
-                appState.availableClicks = data.availableClicks;
-                appState.regenRate = data.regenRate;
-                appState.upgradeLevels = data.upgradeLevels;
-                
-                // Play upgrade sound
-                playSound('upgrade');
-                
-                // Update UI
-                updateUI();
-                
-                // Show success notification
-                let upgradeMessage = '';
-                if (upgradeType === 'click') {
-                    upgradeMessage = 'Мощность клика увеличена!';
-                } else if (upgradeType === 'storage') {
-                    upgradeMessage = 'Объем хранилища увеличен!';
-                } else if (upgradeType === 'speed') {
-                    upgradeMessage = 'Скорость восстановления увеличена!';
-                }
-                
-                showNotification(upgradeMessage);
-                
-            } catch (error) {
-                console.error('Upgrade error:', error);
-                showNotification(error.message || 'Ошибка при улучшении');
-            }
-        }
-
-        // Add function to update upgrade buttons
-        function updateUpgradeButtons() {
-            // Click upgrade
-            if (appState.upgradeLevels.click.level >= appState.upgradeLevels.click.maxLevel) {
-                elements.clickUpgradeBtn.innerHTML = '<span class="max-level-badge">МАКС. УРОВЕНЬ</span>';
-                elements.clickUpgradeBtn.disabled = true;
-            } else {
-                elements.clickUpgradeBtn.disabled = appState.totalClicks < appState.upgradeLevels.click.cost;
-                elements.clickUpgradeCost.textContent = `${formatNumber(appState.upgradeLevels.click.cost)} $DGR`;
-            }
-            elements.clickUpgradeLevel.textContent = appState.upgradeLevels.click.level;
-            
-            // Storage upgrade
-            if (appState.upgradeLevels.storage.level >= appState.upgradeLevels.storage.maxLevel) {
-                elements.storageUpgradeBtn.innerHTML = '<span class="max-level-badge">МАКС. УРОВЕНЬ</span>';
-                elements.storageUpgradeBtn.disabled = true;
-            } else {
-                elements.storageUpgradeBtn.disabled = appState.totalClicks < appState.upgradeLevels.storage.cost;
-                elements.storageUpgradeCost.textContent = `${formatNumber(appState.upgradeLevels.storage.cost)} $DGR`;
-            }
-            elements.storageUpgradeLevel.textContent = appState.upgradeLevels.storage.level;
-            
-            // Speed upgrade
-            if (appState.upgradeLevels.speed.level >= appState.upgradeLevels.speed.maxLevel) {
-                elements.speedUpgradeBtn.innerHTML = '<span class="max-level-badge">МАКС. УРОВЕНЬ</span>';
-                elements.speedUpgradeBtn.disabled = true;
-            } else {
-                elements.speedUpgradeBtn.disabled = appState.totalClicks < appState.upgradeLevels.speed.cost;
-                elements.speedUpgradeCost.textContent = `${formatNumber(appState.upgradeLevels.speed.cost)} $DGR`;
-            }
-            elements.speedUpgradeLevel.textContent = appState.upgradeLevels.speed.level;
-            
-            // Update bonus descriptions based on next level
-            updateUpgradeBonusText();
-        }
-
-        // Add function to update bonus text
-        function updateUpgradeBonusText() {
-            const nextClickLevel = appState.upgradeLevels.click.level + 1;
-            let clickBonus = 0;
-            
-            if (nextClickLevel === 1) clickBonus = 2;
-            else if (nextClickLevel === 2) clickBonus = 3.5;
-            else if (nextClickLevel === 3) clickBonus = 1.5;
-            else if (nextClickLevel === 4) clickBonus = 4;
-            else clickBonus = 1 + (nextClickLevel - 4);
-            
-            elements.clickUpgradeBonus.textContent = `+${clickBonus} $DGR за клик`;
-            
-            // Storage bonus
-            const nextStorageLevel = appState.upgradeLevels.storage.level + 1;
-            let storageBonus = 0;
-            
-            if (nextStorageLevel === 1) storageBonus = 20;
-            else if (nextStorageLevel === 2) storageBonus = 25;
-            else if (nextStorageLevel === 3) storageBonus = 30;
-            else storageBonus = 20;
-            
-            elements.storageUpgradeBonus.textContent = `+${storageBonus} тапов`;
-            
-            // Speed bonus is always the same
-            elements.speedUpgradeBonus.textContent = `-0.05 сек на тап`;
-        }
-
-        // Add event listeners for upgrade buttons at the end of the file
-        elements.upgradesBackBtn.addEventListener('click', () => {
-            switchPage('mainPage');
-        });
-
-        elements.clickUpgradeBtn.addEventListener('click', () => {
-            purchaseUpgrade('click');
-        });
-
-        elements.storageUpgradeBtn.addEventListener('click', () => {
-            purchaseUpgrade('storage');
-        });
-
-        elements.speedUpgradeBtn.addEventListener('click', () => {
-            purchaseUpgrade('speed');
-        });
-
-        // Функция для проверки подписки на канал
-        async function checkChannelSubscription(taskId, channelId) {
-            try {
-                const response = await fetch('/api/tasks/check-subscription', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        user_id: appState.userId,
-                        channel_id: channelId
-                    })
-                });
-
-                const data = await response.json();
-                
-                if (data.success) {
-                    showNotification('Подписка подтверждена! Награда начислена.', 'success');
-                    loadTasks(); // Обновляем список заданий
-                } else {
-                    showNotification('Вы не подписаны на канал. Пожалуйста, подпишитесь и попробуйте снова.', 'error');
-                }
-            } catch (error) {
-                console.error('Error checking subscription:', error);
-                showNotification('Ошибка при проверке подписки', 'error');
-            }
-        }
-        
-        // Добавьте обработчики для кнопок проверки
-        document.getElementById('task1Check').addEventListener('click', () => {
-            checkChannelSubscription('-1002050956586', 1);
-        });
-        
-        document.getElementById('task2Check').addEventListener('click', () => {
-            checkChannelSubscription('-1002050956587', 2);
-        });
-
-        // Функция для загрузки и отображения заданий
-        async function loadTasks() {
-            try {
-                const response = await fetch('/api/tasks');
-                if (!response.ok) {
-                    throw new Error('Failed to load tasks');
-                }
-                
-                const tasks = await response.json();
-                const tasksContainer = document.getElementById('tasksList');
-                tasksContainer.innerHTML = '';
-                
-                tasks.forEach(task => {
-                    const taskCard = document.createElement('div');
-                    taskCard.className = 'task-card';
-                    
-                    taskCard.innerHTML = `
-                        <div class="task-actions">
-                            <a href="${task.channel_link}" target="_blank" class="task-join-btn" title="${task.title}">
-                                ${task.title}
-                            </a>
-                            <button class="task-check-btn" onclick="checkSubscription('${task.channel_id}')">
-                                Проверить
-                            </button>
-                        </div>
-                    `;
-                    
-                    tasksContainer.appendChild(taskCard);
-                });
-            } catch (error) {
-                console.error('Error loading tasks:', error);
-                showNotification('Ошибка при загрузке заданий', 'error');
-            }
-        }
-
-        // Функция для проверки подписки
-        async function checkSubscription(channelId) {
-            try {
-                const response = await fetch('/api/tasks/check-subscription', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        user_id: userId,
-                        channel_id: channelId
-                    })
-                });
-                
-                if (!response.ok) {
-                    throw new Error('Failed to check subscription');
-                }
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    if (data.is_subscribed) {
-                        showNotification(`Поздравляем! Вы получили ${data.reward} $DGR!`);
-                        loadUserData(); // Обновляем баланс
-                    } else {
-                        showNotification('Вы еще не подписались на канал. Пожалуйста, подпишитесь и попробуйте снова.');
-                    }
-                } else {
-                    showNotification('Ошибка при проверке подписки');
-                }
-            } catch (error) {
-                console.error('Error checking subscription:', error);
-                showNotification('Произошла ошибка при проверке подписки');
-            }
-        }
-
-        // Load tasks when page loads
-        document.addEventListener('DOMContentLoaded', loadTasks);
-
-        // ... existing code ...
     </script>
 </body>
 </html>
