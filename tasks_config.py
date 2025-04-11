@@ -4,7 +4,7 @@ TASKS = {
         'id': '1',
         'title': 'ДЕНЬГИ В TONE',
         'channel_id': '-1002435743499',
-        'channel_link': 't.me/moneyiston',
+        'channel_link': 'https://t.me/moneyiston',
         'reward': 500
     }
 }
