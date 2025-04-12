@@ -51,67 +51,40 @@ def get_db_connection():
         raise
 
 def check_and_update_schema():
-    """Проверяет и обновляет схему базы данных, если необходимо."""
-    try:
-        conn = get_db_connection()
-        cur = conn.cursor()
-        
-        # Проверяем наличие столбца username в таблице users
-        cur.execute("""
-        SELECT EXISTS (
-            SELECT FROM information_schema.columns 
-            WHERE table_name = 'users' AND column_name = 'username'
-        )
-        """)
-        
-        if not cur.fetchone()[0]:
-            app.logger.info("Adding username column to users table")
-            cur.execute("ALTER TABLE users ADD COLUMN username VARCHAR(255)")
-        
-        # Проверяем наличие столбца last_claim_time в таблице users
-        cur.execute("""
-        SELECT EXISTS (
-            SELECT FROM information_schema.columns 
-            WHERE table_name = 'users' AND column_name = 'last_claim_time'
-        )
-        """)
-        
-        if not cur.fetchone()[0]:
-            app.logger.info("Adding last_claim_time column to users table")
-            cur.execute("ALTER TABLE users ADD COLUMN last_claim_time TIMESTAMP")
-        
-        # Проверяем наличие столбца earnings в таблице referrals
-        cur.execute("""
-        SELECT EXISTS (
-            SELECT FROM information_schema.columns 
-            WHERE table_name = 'referrals' AND column_name = 'earnings'
-        )
-        """)
-        
-        if not cur.fetchone()[0]:
-            app.logger.info("Adding earnings column to referrals table")
-            cur.execute("ALTER TABLE referrals ADD COLUMN earnings INTEGER DEFAULT 0")
-        
-        # Проверяем наличие столбцов для уровней улучшений
-        for column in ['click_upgrade_level', 'storage_upgrade_level', 'speed_upgrade_level']:
-            cur.execute(f"""
-            SELECT EXISTS (
-                SELECT FROM information_schema.columns 
-                WHERE table_name = 'users' AND column_name = '{column}'
-            )
-            """)
-            
-            if not cur.fetchone()[0]:
-                app.logger.info(f"Adding {column} column to users table")
-                cur.execute(f"ALTER TABLE users ADD COLUMN {column} INTEGER DEFAULT 0")
-        
-        conn.commit()
-        app.logger.info("Database schema updated successfully")
-    except Exception as e:
-        app.logger.error(f"Error updating database schema: {str(e)}")
-    finally:
-        if 'cur' in locals(): cur.close()
-        if 'conn' in locals(): conn.close()
+    app.logger.info("Checking and updating database schema")
+    with get_db_connection() as conn:
+        with conn.cursor() as cur:
+            # Проверка наличия колонок для улучшений
+            try:
+                cur.execute("""
+                SELECT column_name 
+                FROM information_schema.columns 
+                WHERE table_name='users' 
+                AND column_name IN ('click_upgrade_level', 'storage_upgrade_level', 'speed_upgrade_level', 'first_name')
+                """)
+                columns = set(row[0] for row in cur.fetchall())
+                
+                if 'click_upgrade_level' not in columns:
+                    app.logger.info("Adding click_upgrade_level column to users table")
+                    cur.execute("ALTER TABLE users ADD COLUMN click_upgrade_level INTEGER DEFAULT 0")
+                
+                if 'storage_upgrade_level' not in columns:
+                    app.logger.info("Adding storage_upgrade_level column to users table")
+                    cur.execute("ALTER TABLE users ADD COLUMN storage_upgrade_level INTEGER DEFAULT 0")
+                
+                if 'speed_upgrade_level' not in columns:
+                    app.logger.info("Adding speed_upgrade_level column to users table")
+                    cur.execute("ALTER TABLE users ADD COLUMN speed_upgrade_level INTEGER DEFAULT 0")
+                
+                if 'first_name' not in columns:
+                    app.logger.info("Adding first_name column to users table")
+                    cur.execute("ALTER TABLE users ADD COLUMN first_name VARCHAR(255) DEFAULT NULL")
+                
+                conn.commit()
+                app.logger.info("Schema update completed successfully")
+            except Exception as e:
+                app.logger.error(f"Error updating schema: {str(e)}")
+                conn.rollback()
 
 # Вызываем инициализацию и обновление схемы базы данных
 try:
@@ -131,6 +104,7 @@ def init_db():
         CREATE TABLE IF NOT EXISTS users (
             user_id BIGINT PRIMARY KEY,
             username VARCHAR(255) DEFAULT 'user',
+            first_name VARCHAR(255) DEFAULT NULL,
             total_clicks INTEGER DEFAULT 0,
             available_clicks NUMERIC DEFAULT 100,
             click_power INTEGER DEFAULT 1,
@@ -186,6 +160,7 @@ def get_user():
         data = request.get_json()
         user_id = data.get('userId')
         username = data.get('username', 'user')
+        first_name = data.get('firstName')
         
         if not user_id:
             app.logger.error("No user ID provided")
@@ -201,22 +176,22 @@ def get_user():
                     # Если пользователя нет, создаем нового
                     try:
                         cur.execute("""
-                        INSERT INTO users (user_id, username, total_clicks, available_clicks, 
+                        INSERT INTO users (user_id, username, first_name, total_clicks, available_clicks, 
                                         click_power, max_clicks, regen_rate, last_update, created_at,
                                         click_upgrade_level, storage_upgrade_level, speed_upgrade_level)
-                        VALUES (%s, %s, 0, 100, 1, 100, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0, 0, 0)
+                        VALUES (%s, %s, %s, 0, 100, 1, 100, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0, 0, 0)
                         RETURNING *
-                        """, (user_id, username))
+                        """, (user_id, username, first_name))
                     except psycopg2.Error as e:
                         # Если ошибка связана с отсутствием колонок улучшений, используем базовый запрос
                         if "column" in str(e) and any(col in str(e) for col in ["click_upgrade_level", "storage_upgrade_level", "speed_upgrade_level"]):
                             app.logger.warning("Using basic INSERT query due to missing upgrade columns")
                             cur.execute("""
-                            INSERT INTO users (user_id, username, total_clicks, available_clicks, 
+                            INSERT INTO users (user_id, username, first_name, total_clicks, available_clicks, 
                                             click_power, max_clicks, regen_rate, last_update, created_at)
-                            VALUES (%s, %s, 0, 100, 1, 100, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                            VALUES (%s, %s, %s, 0, 100, 1, 100, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
                             RETURNING *
-                            """, (user_id, username))
+                            """, (user_id, username, first_name))
                         else:
                             raise
                     
@@ -231,10 +206,11 @@ def get_user():
                             available_clicks + EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - last_update)) * 0.1 * regen_rate
                         ),
                         last_update = CURRENT_TIMESTAMP,
-                        username = CASE WHEN %s != 'user' AND %s IS NOT NULL THEN %s ELSE username END
+                        username = CASE WHEN %s != 'user' AND %s IS NOT NULL THEN %s ELSE username END,
+                        first_name = CASE WHEN %s IS NOT NULL THEN %s ELSE first_name END
                     WHERE user_id = %s
                     RETURNING *
-                    """, (username, username, username, user_id))
+                    """, (username, username, username, first_name, first_name, user_id))
                     user_data = cur.fetchone()
                 
                 if not user_data:
@@ -860,6 +836,7 @@ def get_ranking():
         data = request.get_json()
         user_id = data.get('userId')
         username = data.get('username')
+        first_name = data.get('firstName')
         
         if not user_id:
             return jsonify({'error': 'User ID is required'}), 400
@@ -876,13 +853,25 @@ def get_ranking():
             except Exception as e:
                 app.logger.error(f"Error updating username: {str(e)}")
         
+        # Обновляем первое имя пользователя, если оно передано
+        if first_name:
+            try:
+                with get_db_connection() as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("""
+                        UPDATE users SET first_name = %s WHERE user_id = %s
+                        """, (first_name, user_id))
+                        conn.commit()
+            except Exception as e:
+                app.logger.error(f"Error updating first_name: {str(e)}")
+        
         with get_db_connection() as conn:
             with conn.cursor(cursor_factory=DictCursor) as cur:
-                # Получаем топ-20 игроков по балансу
+                # Получаем топ-20 игроков по количеству кликов
                 cur.execute("""
-                SELECT user_id, username, total_clicks as balance
-                FROM users
-                ORDER BY total_clicks DESC
+                SELECT user_id, username, first_name, total_clicks 
+                FROM users 
+                ORDER BY total_clicks DESC 
                 LIMIT 20
                 """)
                 
@@ -896,7 +885,8 @@ def get_ranking():
                     top_players.append({
                         'userId': row['user_id'],
                         'username': display_username,
-                        'balance': row['balance']
+                        'firstName': row['first_name'],
+                        'totalClicks': row['total_clicks']
                     })
                 
                 # Определяем ранг текущего пользователя
@@ -906,13 +896,12 @@ def get_ranking():
                 total_users = cur.fetchone()['total_users']
                 
                 cur.execute("""
-                SELECT count(*) as better_users
-                FROM users
+                SELECT count(*) as better_users FROM users 
                 WHERE total_clicks > (SELECT total_clicks FROM users WHERE user_id = %s)
                 """, (user_id,))
-                better_users = cur.fetchone()['better_users']
                 
-                user_rank = better_users + 1  # Ранг = количество пользователей с большим балансом + 1
+                better_users = cur.fetchone()['better_users']
+                user_rank = better_users + 1  # Ранг = количество пользователей с большим количеством кликов + 1
                 
                 return jsonify({
                     'topPlayers': top_players,
@@ -932,6 +921,7 @@ def get_referral_ranking():
         data = request.get_json()
         user_id = data.get('userId')
         username = data.get('username')
+        first_name = data.get('firstName')
         
         if not user_id:
             return jsonify({'error': 'User ID is required'}), 400
@@ -948,11 +938,23 @@ def get_referral_ranking():
             except Exception as e:
                 app.logger.error(f"Error updating username: {str(e)}")
         
+        # Обновляем первое имя пользователя, если оно передано
+        if first_name:
+            try:
+                with get_db_connection() as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("""
+                        UPDATE users SET first_name = %s WHERE user_id = %s
+                        """, (first_name, user_id))
+                        conn.commit()
+            except Exception as e:
+                app.logger.error(f"Error updating first_name: {str(e)}")
+        
         with get_db_connection() as conn:
             with conn.cursor(cursor_factory=DictCursor) as cur:
                 # Получаем топ-20 игроков по количеству рефералов
                 cur.execute("""
-                SELECT u.user_id, u.username, COUNT(r.id) as referral_count
+                SELECT u.user_id, u.username, u.first_name, COUNT(r.id) as referral_count
                 FROM users u
                 LEFT JOIN referrals r ON u.user_id = r.referrer_id
                 GROUP BY u.user_id
@@ -970,6 +972,7 @@ def get_referral_ranking():
                     top_players.append({
                         'userId': row['user_id'],
                         'username': display_username,
+                        'firstName': row['first_name'],
                         'referralCount': row['referral_count'] or 0
                     })
                 
