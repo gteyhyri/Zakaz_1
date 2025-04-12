@@ -1667,6 +1667,7 @@
         // Получаем данные пользователя из Telegram
         const userId = tg.initDataUnsafe.user?.id;
         const username = tg.initDataUnsafe.user?.username || 'Пользователь';
+        const firstName = tg.initDataUnsafe.user?.first_name || 'Пользователь';
         
         if (!userId) {
             console.error("User ID not found in Telegram WebApp init data");
@@ -1837,10 +1838,10 @@
             }
         }
         
-        // Загрузка данных пользователя
+        // Функция для загрузки данных пользователя
         async function loadUserData() {
             try {
-                tg.MainButton.showProgress();
+                handleFirstInteraction();
                 
                 const response = await fetch('/api/user', {
                     method: 'POST',
@@ -1849,40 +1850,34 @@
                         'Telegram-Init-Data': tg.initData || ''
                     },
                     body: JSON.stringify({ 
-                        userId,
-                        username: username
+                        userId, 
+                        username,
+                        firstName
                     })
                 });
-        
+                
                 if (!response.ok) {
                     throw new Error('Failed to load user data');
                 }
-        
+                
                 const data = await response.json();
-        
-                appState = {
-                    ...appState,
-                    totalClicks: parseInt(data.totalClicks) || 0,
-                    availableClicks: parseFloat(data.availableClicks) || 100,
-                    clickPower: parseInt(data.clickPower) || 1,
-                    maxClicks: parseInt(data.maxClicks) || 100,
-                    regenRate: parseFloat(data.regenRate) || 1,
-                    lastUpdate: Date.now()
-                };
-        
-                if (data.upgradeLevels) {
-                    appState.upgradeLevels = data.upgradeLevels;
-                }
-        
+                
+                // Обновляем состояние приложения
+                appState.totalClicks = data.totalClicks;
+                appState.availableClicks = data.availableClicks;
+                appState.clickPower = data.clickPower;
+                appState.maxClicks = data.maxClicks;
+                appState.regenRate = data.regenRate;
+                appState.upgradeLevels = data.upgradeLevels;
+                
+                // Обновляем UI
                 updateUI();
                 
+                return data;
             } catch (error) {
                 console.error('Error loading user data:', error);
-                showNotification('Ошибка загрузки данных');
-                setTimeout(loadUserData, 5000);
-                
-            } finally {
-                tg.MainButton.hideProgress();
+                showNotification('Ошибка при загрузке данных', 'error');
+                return null;
             }
         }
         
@@ -2080,44 +2075,45 @@
                 });
         }
         
-        // Загрузка реферальной статистики
+        // Функция для загрузки реферальной статистики
         async function loadReferralStats() {
-            if (!userId) {
-                console.error('User ID not available for loading referral stats');
-                return;
-            }
-            
             try {
-                const response = await fetch('/api/user/referrals', {
+                handleFirstInteraction();
+                
+                // Загружаем рейтинг по рефералам
+                const response = await fetch('/api/ranking/referrals', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Telegram-Init-Data': tg.initData || ''
                     },
-                    body: JSON.stringify({ userId })
+                    body: JSON.stringify({
+                        userId: userId,
+                        username: username,
+                        firstName: firstName
+                    })
                 });
                 
                 if (!response.ok) {
-                    throw new Error('Failed to load referral stats');
+                    throw new Error('Failed to load referral ranking data');
                 }
                 
                 const data = await response.json();
-                appState.referralCount = data.referralCount || 0;
-                appState.referrals = data.referrals || [];
-                appState.claimableAmount = data.claimableAmount || 0;
-                appState.lastClaimTime = data.lastClaimTime ? new Date(data.lastClaimTime) : null;
+                const topPlayers = data.topPlayers || [];
+                const userRank = data.userRank || { rank: '--', totalUsers: '--' };
                 
-                // Обновляем UI с реферальной статистикой
-                updateReferralUI();
+                // Обновляем ранг по рефералам
+                appState.referralsRank = userRank.rank;
+                elements.referralsRankValue.textContent = userRank.rank;
+                
+                // Обновляем UI с рейтингом
+                updateReferralRankingUI(topPlayers, userRank);
                 
             } catch (error) {
-                console.error('Error loading referral stats:', error);
-                // Если ошибка - устанавливаем дефолтные значения, чтобы UI не сломался
-                appState.referralCount = 0;
-                appState.referrals = [];
-                appState.claimableAmount = 0;
-                appState.lastClaimTime = null;
-                updateReferralUI();
+                console.error('Error loading referral ranking data:', error);
+                document.getElementById('referralRankingList').innerHTML = 
+                    '<div class="referral-ranking-list-loading">Не удалось загрузить рейтинг. Попробуйте позже.</div>';
+                document.getElementById('yourReferralRank').textContent = '--';
             }
         }
         
@@ -2337,7 +2333,7 @@
             }
         }
         
-        // Загрузка рейтинга игроков
+        // Загрузка общего рейтинга
         async function loadRanking() {
             if (!userId) {
                 console.error('User ID not available for loading ranking');
@@ -2345,9 +2341,6 @@
             }
             
             try {
-                const rankingList = document.getElementById('rankingList');
-                rankingList.innerHTML = '<div class="ranking-list-loading"><i class="fas fa-spinner fa-spin"></i> Загрузка рейтинга...</div>';
-                
                 const response = await fetch('/api/ranking', {
                     method: 'POST',
                     headers: {
@@ -2356,7 +2349,8 @@
                     },
                     body: JSON.stringify({ 
                         userId,
-                        username: username
+                        username: username,
+                        firstName: firstName
                     })
                 });
                 
@@ -2405,14 +2399,14 @@
                     rankClass += ' ranking-you';
                 }
                 
-                const displayUsername = player.username && player.username !== 'user' ? 
-                    player.username : `User${player.userId % 1000}`;
+                const displayName = player.firstName ? 
+                    player.firstName : (player.username ? player.username : `User${player.userId % 1000}`);
                 
                 rankItem.className = `ranking-item ${rankClass}`;
                 rankItem.innerHTML = `
                     <div class="ranking-rank">${index + 1}</div>
-                    <div class="ranking-username">@${displayUsername}</div>
-                    <div class="ranking-balance">${formatNumber(player.balance)} $DGR</div>
+                    <div class="ranking-username">${displayName}</div>
+                    <div class="ranking-balance">${formatNumber(player.totalClicks)} $DGR</div>
                 `;
                 
                 rankingList.appendChild(rankItem);
@@ -2446,7 +2440,8 @@
                     },
                     body: JSON.stringify({ 
                         userId,
-                        username: username
+                        username: username,
+                        firstName: firstName
                     })
                 });
                 
@@ -2495,13 +2490,13 @@
                     rankClass += ' referral-ranking-you';
                 }
                 
-                const displayUsername = player.username && player.username !== 'user' ? 
-                    player.username : `User${player.userId % 1000}`;
+                const displayName = player.firstName ? 
+                    player.firstName : (player.username ? player.username : `User${player.userId % 1000}`);
                 
                 rankItem.className = `referral-ranking-item ${rankClass}`;
                 rankItem.innerHTML = `
                     <div class="referral-ranking-rank">${index + 1}</div>
-                    <div class="referral-ranking-username">@${displayUsername}</div>
+                    <div class="referral-ranking-username">${displayName}</div>
                     <div class="referral-ranking-count">${formatNumber(player.referralCount)}</div>
                 `;
                 
