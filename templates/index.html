@@ -24,6 +24,21 @@
             padding: 0;
             box-sizing: border-box;
             font-family: 'Montserrat', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            outline: none;
+        }
+
+        button, a {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        button:focus, a:focus {
+            outline: none;
         }
 
         body {
@@ -271,7 +286,7 @@
             justify-content: space-around;
             align-items: center;
             background-color: var(--white);
-            padding: 10px 0;
+            padding: 12px 0;
             box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
             position: sticky;
             bottom: 0;
@@ -296,8 +311,8 @@
         }
 
         .nav-btn img {
-            width: 30px;
-            height: 30px;
+            width: 36px;
+            height: 36px;
             object-fit: contain;
             margin-bottom: 5px;
         }
@@ -305,7 +320,7 @@
         .nav-btn span {
             font-size: 12px;
             color: var(--dark-blue);
-            font-weight: 500;
+            font-weight: 600;
         }
 
         .active-nav {
@@ -1297,66 +1312,63 @@
         .task-card {
             background-color: #f5f7fa;
             border-radius: 12px;
-            padding: 16px;
+            padding: 14px 16px;
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
             gap: 12px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             margin-bottom: 16px;
             border: 1px solid rgba(42, 127, 255, 0.1);
+            transform: translateY(0); /* Добавляем для плавной анимации */
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
-        .task-actions {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
+        .task-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
 
-        .task-join-btn {
+        /* Страница улучшений */
+        .page.upgradesPage {
+            padding: 16px;
+        }
+
+        .upgrades-header {
+            margin-bottom: 20px;
+        }
+
+        .upgrade-item {
             background-color: white;
-            color: #000;
-            font-weight: 600;
-            border: 1px solid #e1e4e8;
-            border-radius: 8px;
-            padding: 12px 16px;
-            font-size: 15px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-decoration: none;
-            flex: 1;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 70%;
-            text-align: left;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
 
-        .task-join-btn:hover {
-            background-color: #f5f5f5;
-            border-color: #ccc;
+        /* Анимация Float In / Gentle Rise */
+        @keyframes floatIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        .task-check-btn {
-            background-color: #2a7fff;
-            color: white;
-            border: none;
-            border-radius: 20px;
-            padding: 12px 20px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            white-space: nowrap;
-            min-width: 120px;
-            box-shadow: 0 2px 5px rgba(42, 127, 255, 0.2);
+        .float-in {
+            animation: floatIn 0.5s ease-out forwards;
+            opacity: 0;
         }
 
-        .task-check-btn:hover {
-            background-color: #1a6ce8;
-            box-shadow: 0 3px 8px rgba(42, 127, 255, 0.3);
-        }
+        .delay-100 { animation-delay: 0.1s; }
+        .delay-200 { animation-delay: 0.2s; }
+        .delay-300 { animation-delay: 0.3s; }
+        .delay-400 { animation-delay: 0.4s; }
+        .delay-500 { animation-delay: 0.5s; }
     </style>
 </head>
 <body>
@@ -1381,105 +1393,89 @@
     
     <div id="mainPage" class="page active">
         <div class="main-content">
-            <h1 class="title">Elite Clicker</h1>
-            <p class="subtitle">Нажимайте на изображение для получения $DGR</p>
-            
-            <div class="clicker-container" id="clickerContainer">
-                <img src="/static/IMG_8264.PNG" alt="Click me" class="clicker-image" id="clickerImage">
+            <div class="center-content">
+                <!-- Информация о балансе -->
+                <div class="balance-container float-in">
+                    <div class="balance-box">
+                        <div class="balance-title">Ваш баланс</div>
+                        <div class="balance-value"><span id="totalClicks">0</span> $DGR</div>
+                    </div>
+                </div>
+                
+                <!-- Кнопка клика -->
+                <div class="click-container float-in delay-100">
+                    <div class="click-info">
+                        <div>
+                            <span id="clickPower">1</span> $DGR за тап
+                        </div>
+                        <div>
+                            <span id="availableClicks">100</span>/<span id="maxClicks">100</span> тапов
+                        </div>
+                    </div>
+                    <button id="clickBtn" class="click-btn">
+                        <span class="click-icon">💎</span>
+                    </button>
+                </div>
+
+                <!-- Кнопка улучшений -->
+                <div class="upgrade-container float-in delay-200">
+                    <button id="upgradeBtn" class="upgrade-btn">Улучшения</button>
+                </div>
             </div>
-            
-            <div class="stats-container">
-                <div class="click-counter">Баланс: <span id="totalClicks">0</span> $DGR</div>
-                <div class="stat-item">
-                    <span class="stat-label">Доступно кликов:</span>
-                    <span class="stat-value" id="availableClicks">100</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">Сила клика:</span>
-                    <span class="stat-value" id="clickPower">1</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">Восстановление:</span>
-                    <span class="stat-value" id="regenRate">1 клик/сек</span>
-                </div>
-                <div class="regen-bar">
-                    <div class="regen-progress" id="regenProgress" style="width: 100%"></div>
-                </div>
-            </div>
-            
-            <button class="upgrade-btn" id="upgradeBtn">Улучшения</button>
-            
-            <button class="upgrade-btn ranking-btn" id="rankingBtn" style="margin-top: 12px;">Рейтинг игроков</button>
         </div>
     </div>
 
     <div id="upgradesPage" class="page">
-        <div class="page-content">
-            <h2 class="title">Улучшения</h2>
-            <p class="subtitle">Улучшайте параметры для увеличения эффективности</p>
-            
-            <div class="upgrades-container">
-                <div class="upgrade-card" id="clickUpgrade">
-                    <div class="upgrade-icon">
-                        <i class="fas fa-hand-pointer"></i>
-                    </div>
-                    <div class="upgrade-info">
-                        <h3>Мощность клика</h3>
-                        <p class="upgrade-description">Увеличивает количество $DGR за один клик</p>
-                        <div class="upgrade-level">
-                            <span class="level-label">Уровень:</span>
-                            <span class="level-value" id="clickUpgradeLevel">0</span>
-                            <span class="level-max">/12</span>
-                        </div>
-                        <div class="upgrade-bonus" id="clickUpgradeBonus">+2 $DGR за клик</div>
-                    </div>
-                    <button class="upgrade-purchase-btn" id="clickUpgradeBtn">
-                        <span class="upgrade-cost" id="clickUpgradeCost">200 $DGR</span>
-                    </button>
+        <div class="page-header float-in">
+            <h2>Улучшения</h2>
+        </div>
+        <div class="upgrades-container">
+            <!-- Улучшение клика -->
+            <div class="upgrade-item float-in delay-100">
+                <div class="upgrade-info">
+                    <div class="upgrade-title">Сила клика</div>
+                    <div class="upgrade-description">Увеличивает количество $DGR за каждый клик</div>
+                    <div class="upgrade-level">Уровень: <span id="clickUpgradeLevel">0</span></div>
+                    <div class="upgrade-bonus" id="clickUpgradeBonus">+1 $DGR за клик</div>
                 </div>
-                
-                <div class="upgrade-card" id="storageUpgrade">
-                    <div class="upgrade-icon">
-                        <i class="fas fa-database"></i>
-                    </div>
-                    <div class="upgrade-info">
-                        <h3>Объем хранилища</h3>
-                        <p class="upgrade-description">Увеличивает максимальное количество доступных тапов</p>
-                        <div class="upgrade-level">
-                            <span class="level-label">Уровень:</span>
-                            <span class="level-value" id="storageUpgradeLevel">0</span>
-                            <span class="level-max">/12</span>
-                        </div>
-                        <div class="upgrade-bonus" id="storageUpgradeBonus">+20 тапов</div>
-                    </div>
-                    <button class="upgrade-purchase-btn" id="storageUpgradeBtn">
-                        <span class="upgrade-cost" id="storageUpgradeCost">200 $DGR</span>
-                    </button>
-                </div>
-                
-                <div class="upgrade-card" id="speedUpgrade">
-                    <div class="upgrade-icon">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                    <div class="upgrade-info">
-                        <h3>Скорость восстановления</h3>
-                        <p class="upgrade-description">Уменьшает время восстановления тапов</p>
-                        <div class="upgrade-level">
-                            <span class="level-label">Уровень:</span>
-                            <span class="level-value" id="speedUpgradeLevel">0</span>
-                            <span class="level-max">/12</span>
-                        </div>
-                        <div class="upgrade-bonus" id="speedUpgradeBonus">-0.05 сек на тап</div>
-                    </div>
-                    <button class="upgrade-purchase-btn" id="speedUpgradeBtn">
-                        <span class="upgrade-cost" id="speedUpgradeCost">2000 $DGR</span>
-                    </button>
+                <div class="upgrade-action">
+                    <div class="upgrade-cost"><span id="clickUpgradeCost">200</span> $DGR</div>
+                    <button id="clickUpgradeBtn" class="btn-upgrade" onclick="purchaseUpgrade('click')">Улучшить</button>
                 </div>
             </div>
             
-            <button class="back-button" id="upgradesBackBtn">
-                <i class="fas fa-arrow-left"></i> Назад
-            </button>
+            <!-- Улучшение хранилища -->
+            <div class="upgrade-item float-in delay-200">
+                <div class="upgrade-info">
+                    <div class="upgrade-title">Объем хранилища</div>
+                    <div class="upgrade-description">Увеличивает максимальное количество доступных кликов</div>
+                    <div class="upgrade-level">Уровень: <span id="storageUpgradeLevel">0</span></div>
+                    <div class="upgrade-bonus" id="storageUpgradeBonus">+20 тапов</div>
+                </div>
+                <div class="upgrade-action">
+                    <div class="upgrade-cost"><span id="storageUpgradeCost">200</span> $DGR</div>
+                    <button id="storageUpgradeBtn" class="btn-upgrade" onclick="purchaseUpgrade('storage')">Улучшить</button>
+                </div>
+            </div>
+            
+            <!-- Улучшение скорости регенерации -->
+            <div class="upgrade-item float-in delay-300">
+                <div class="upgrade-info">
+                    <div class="upgrade-title">Скорость восстановления</div>
+                    <div class="upgrade-description">Ускоряет восстановление кликов</div>
+                    <div class="upgrade-level">Уровень: <span id="speedUpgradeLevel">0</span></div>
+                    <div class="upgrade-bonus" id="speedUpgradeBonus">-0.05 сек на тап</div>
+                </div>
+                <div class="upgrade-action">
+                    <div class="upgrade-cost"><span id="speedUpgradeCost">2000</span> $DGR</div>
+                    <button id="speedUpgradeBtn" class="btn-upgrade" onclick="purchaseUpgrade('speed')">Улучшить</button>
+                </div>
+            </div>
+            
+            <!-- Кнопка возврата -->
+            <div class="back-button-container float-in delay-400">
+                <button id="upgradesBackBtn" class="btn-back">Назад</button>
+            </div>
         </div>
     </div>
     
@@ -1537,14 +1533,12 @@
         </div>
     </div>
     
-    <div class="page" id="tasksPage">
-        <div class="tasks-container">
-            <h2 class="tasks-title">Задания</h2>
-            <p class="tasks-description">Выполняйте задания и получайте награды в $DGR</p>
-            
-            <div id="tasksList">
-                <!-- Tasks will be loaded here dynamically -->
-            </div>
+    <div id="tasksPage" class="page">
+        <div class="page-header float-in">
+            <h2>Задания</h2>
+        </div>
+        <div class="page-content">
+            <div id="tasksList" class="tasks-list float-in delay-100"></div>
         </div>
     </div>
     
@@ -2013,16 +2007,24 @@
         
         // Переключение страниц
         function switchPage(pageId) {
+            // Скрываем все страницы
             document.querySelectorAll('.page').forEach(page => {
                 page.classList.remove('active');
             });
             
-            document.getElementById(pageId).classList.add('active');
+            // Показываем выбранную страницу
+            const targetPage = document.getElementById(pageId);
+            targetPage.classList.add('active');
             
+            // Анимируем элементы на странице
+            animatePageElements(pageId);
+            
+            // Выделяем активную кнопку навигации
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.classList.remove('active-nav');
             });
             
+            // Активируем соответствующую кнопку навигации
             if (pageId === 'mainPage') {
                 elements.mainBtn.classList.add('active-nav');
             } else if (pageId === 'tasksPage') {
@@ -2036,6 +2038,8 @@
             } else if (pageId === 'rankingPage') {
                 elements.rankingBtn.classList.add('active-nav');
                 loadRanking();
+            } else if (pageId === 'upgradesPage') {
+                // Для страницы улучшений
             }
             
             handleFirstInteraction();
@@ -2536,9 +2540,10 @@
                 const tasksContainer = document.getElementById('tasksList');
                 tasksContainer.innerHTML = '';
                 
-                tasks.forEach(task => {
+                tasks.forEach((task, index) => {
                     const taskCard = document.createElement('div');
-                    taskCard.className = 'task-card';
+                    taskCard.className = 'task-card float-in';
+                    taskCard.style.animationDelay = `${0.1 + (index * 0.1)}s`;
                     
                     taskCard.innerHTML = `
                         <div class="task-actions">
@@ -2788,6 +2793,31 @@
         
         // Запуск приложения
         document.addEventListener('DOMContentLoaded', initApp);
+
+        // Добавляем функцию для анимации элементов при переключении страниц
+        function animatePageElements(pageId) {
+            // Сначала сбросим анимацию для всех элементов
+            const elements = document.querySelectorAll(`.float-in`);
+            elements.forEach(el => {
+                el.style.animation = 'none';
+                el.offsetHeight; // Trigger reflow
+                el.style.animation = '';
+            });
+            
+            // Затем запускаем анимацию для элементов на активной странице
+            const pageElements = document.querySelectorAll(`#${pageId} .float-in`);
+            pageElements.forEach((el, index) => {
+                // Если у элемента уже есть класс задержки, используем его
+                if (!el.classList.contains('delay-100') && 
+                    !el.classList.contains('delay-200') && 
+                    !el.classList.contains('delay-300') && 
+                    !el.classList.contains('delay-400') && 
+                    !el.classList.contains('delay-500')) {
+                    // Иначе устанавливаем задержку на основе порядка элемента
+                    el.style.animationDelay = `${0.05 * index}s`;
+                }
+            });
+        }
     </script>
 </body>
 </html>
